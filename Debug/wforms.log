@@ -1,0 +1,18 @@
+﻿Build started 3/17/2012 4:56:24 PM.
+     1>Project "C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\wforms.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Touching "Debug\wforms.unsuccessfulbuild".
+       GenerateTargetFrameworkMonikerAttribute:
+       Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
+       ClCompile:
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\..\lib /I"C:\Program Files\MySQL\MySQL Server 5.1\include" /AI"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0" /Zi /clr /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _UNICODE /D UNICODE /EHa /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /TP /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Core.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Data.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Drawing.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Windows.Forms.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Xml.dll" /analyze- /errorReport:prompt wforms.cpp /clr:nostdlib 
+         wforms.cpp
+     1>c:\documents and settings\jet\desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\MainForm.h(136): error C2065: 'con' : undeclared identifier
+     1>c:\documents and settings\jet\desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\MainForm.h(136): error C2228: left of '.query' must have class/struct/union
+                 type is ''unknown-type''
+     1>c:\documents and settings\jet\desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\MainForm.h(136): error C2512: 'mysqlpp::Query' : no appropriate default constructor available
+     1>Done Building Project "C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\wforms.vcxproj" (build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:01.59
