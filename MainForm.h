@@ -37,6 +37,7 @@ namespace wforms {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace System::IO::Ports;
 
 	public ref class MainForm : public System::Windows::Forms::Form
 	{
@@ -45,6 +46,8 @@ namespace wforms {
 		{
 			InitializeComponent();
 			LoadDefaults();
+
+			findPorts();
 		}
 
 	protected:
@@ -101,27 +104,11 @@ namespace wforms {
 			// Retrieve a subset of the sample stock table set up by resetdb
 			mysqlpp::Query query = con.query("SELECT * FROM login WHERE loginid = %0q");		
 			query.parse();
-			//mysqlpp::Query query = con.query();
-			//mysqlpp::Query query = con.query();
-			//query << "SELECT firstname FROM login1";
-			//mysqlpp::StoreQueryResult res = query.store();
 			
 			if (mysqlpp::StoreQueryResult res = query.store(tmpRFID)) {
 				for (size_t i = 0; i < res.num_rows(); ++i) {
 						AddMessage(ToUCS2(res[i]["firstname"]));
-					//RFID->Text = res[i]["firstname"];
-					//cout << '\t' << res[i]["firstname"] << endl;
 				}
-			}
-			/*if (res) {
-				AddMessage(ToUCS2("ASd"));
-				// Display the result set
-				for (size_t i = 0; i < res.num_rows(); ++i) {
-					
-					AddMessage(ToUCS2(res[i][0]));
-				}
-
-				// Retreive was successful, so save user inputs now
 				SaveInputs();
 			}
 			else {
@@ -129,7 +116,6 @@ namespace wforms {
 				AddMessage("Failed to get item list:");
 				AddMessage(ToUCS2(query.error()));
 			}
-			*/
 		}
 
 		private: System::Void RFID_TextChanged(System::Object^  sender, System::EventArgs^  e) {
@@ -215,7 +201,19 @@ namespace wforms {
 	private: System::Windows::Forms::Button^ connectButton_;
 	private: System::Windows::Forms::Button^ closeButton_;
 private: System::Windows::Forms::TextBox^  RFID;
-	private: System::ComponentModel::Container^ components;
+private: System::Windows::Forms::ComboBox^  comboBox1;
+private: System::Windows::Forms::ProgressBar^  progressBar1;
+private: System::Windows::Forms::Button^  btnOpen;
+private: System::Windows::Forms::GroupBox^  grpPorts;
+private: System::Windows::Forms::Button^  btnClosePort;
+private: System::Windows::Forms::Label^  lblPortMsg;
+private: System::Windows::Forms::ComboBox^  comboBox2;
+private: System::IO::Ports::SerialPort^  _serialPort;
+
+
+private: System::ComponentModel::IContainer^  components;
+
+
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
@@ -224,6 +222,7 @@ private: System::Windows::Forms::TextBox^  RFID;
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			this->components = (gcnew System::ComponentModel::Container());
 			System::Windows::Forms::Label^  label1;
 			System::Windows::Forms::Label^  label2;
 			System::Windows::Forms::Label^  label3;
@@ -235,10 +234,19 @@ private: System::Windows::Forms::TextBox^  RFID;
 			this->connectButton_ = (gcnew System::Windows::Forms::Button());
 			this->closeButton_ = (gcnew System::Windows::Forms::Button());
 			this->RFID = (gcnew System::Windows::Forms::TextBox());
+			this->comboBox1 = (gcnew System::Windows::Forms::ComboBox());
+			this->progressBar1 = (gcnew System::Windows::Forms::ProgressBar());
+			this->btnOpen = (gcnew System::Windows::Forms::Button());
+			this->grpPorts = (gcnew System::Windows::Forms::GroupBox());
+			this->comboBox2 = (gcnew System::Windows::Forms::ComboBox());
+			this->lblPortMsg = (gcnew System::Windows::Forms::Label());
+			this->btnClosePort = (gcnew System::Windows::Forms::Button());
+			this->_serialPort = (gcnew System::IO::Ports::SerialPort(this->components));
 			label1 = (gcnew System::Windows::Forms::Label());
 			label2 = (gcnew System::Windows::Forms::Label());
 			label3 = (gcnew System::Windows::Forms::Label());
 			label4 = (gcnew System::Windows::Forms::Label());
+			this->grpPorts->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// label1
@@ -342,6 +350,75 @@ private: System::Windows::Forms::TextBox^  RFID;
 			this->RFID->TabIndex = 10;
 			this->RFID->TextChanged += gcnew System::EventHandler(this, &MainForm::RFID_TextChanged);
 			// 
+			// comboBox1
+			// 
+			this->comboBox1->FormattingEnabled = true;
+			this->comboBox1->Location = System::Drawing::Point(6, 54);
+			this->comboBox1->Name = L"comboBox1";
+			this->comboBox1->Size = System::Drawing::Size(121, 21);
+			this->comboBox1->TabIndex = 11;
+			this->comboBox1->Text = L"COM Ports";
+			// 
+			// progressBar1
+			// 
+			this->progressBar1->Location = System::Drawing::Point(6, 19);
+			this->progressBar1->Name = L"progressBar1";
+			this->progressBar1->Size = System::Drawing::Size(100, 23);
+			this->progressBar1->TabIndex = 12;
+			// 
+			// btnOpen
+			// 
+			this->btnOpen->Location = System::Drawing::Point(6, 145);
+			this->btnOpen->Name = L"btnOpen";
+			this->btnOpen->Size = System::Drawing::Size(75, 23);
+			this->btnOpen->TabIndex = 13;
+			this->btnOpen->Text = L"Open Port";
+			this->btnOpen->UseVisualStyleBackColor = true;
+			this->btnOpen->Click += gcnew System::EventHandler(this, &MainForm::btnOpen_Click);
+			// 
+			// grpPorts
+			// 
+			this->grpPorts->Controls->Add(this->comboBox2);
+			this->grpPorts->Controls->Add(this->lblPortMsg);
+			this->grpPorts->Controls->Add(this->btnClosePort);
+			this->grpPorts->Controls->Add(this->progressBar1);
+			this->grpPorts->Controls->Add(this->comboBox1);
+			this->grpPorts->Controls->Add(this->btnOpen);
+			this->grpPorts->Location = System::Drawing::Point(427, 39);
+			this->grpPorts->Name = L"grpPorts";
+			this->grpPorts->Size = System::Drawing::Size(197, 203);
+			this->grpPorts->TabIndex = 14;
+			this->grpPorts->TabStop = false;
+			this->grpPorts->Text = L"Port Status";
+			// 
+			// comboBox2
+			// 
+			this->comboBox2->FormattingEnabled = true;
+			this->comboBox2->Items->AddRange(gcnew cli::array< System::Object^  >(3) {L"9600", L"38400", L"115200"});
+			this->comboBox2->Location = System::Drawing::Point(6, 95);
+			this->comboBox2->Name = L"comboBox2";
+			this->comboBox2->Size = System::Drawing::Size(121, 21);
+			this->comboBox2->TabIndex = 16;
+			this->comboBox2->Text = L"Baud rate";
+			// 
+			// lblPortMsg
+			// 
+			this->lblPortMsg->AutoSize = true;
+			this->lblPortMsg->Location = System::Drawing::Point(6, 172);
+			this->lblPortMsg->Name = L"lblPortMsg";
+			this->lblPortMsg->Size = System::Drawing::Size(0, 13);
+			this->lblPortMsg->TabIndex = 15;
+			// 
+			// btnClosePort
+			// 
+			this->btnClosePort->Location = System::Drawing::Point(99, 145);
+			this->btnClosePort->Name = L"btnClosePort";
+			this->btnClosePort->Size = System::Drawing::Size(75, 23);
+			this->btnClosePort->TabIndex = 14;
+			this->btnClosePort->Text = L"Close Port";
+			this->btnClosePort->UseVisualStyleBackColor = true;
+			this->btnClosePort->Click += gcnew System::EventHandler(this, &MainForm::btnClosePort_Click);
+			// 
 			// MainForm
 			// 
 			this->AcceptButton = this->connectButton_;
@@ -350,6 +427,7 @@ private: System::Windows::Forms::TextBox^  RFID;
 			this->CancelButton = this->closeButton_;
 			this->ClientSize = System::Drawing::Size(781, 309);
 			this->ControlBox = false;
+			this->Controls->Add(this->grpPorts);
 			this->Controls->Add(this->RFID);
 			this->Controls->Add(label4);
 			this->Controls->Add(label3);
@@ -366,12 +444,57 @@ private: System::Windows::Forms::TextBox^  RFID;
 			this->MinimizeBox = false;
 			this->Name = L"MainForm";
 			this->ShowIcon = false;
-			this->Text = L"MySQL++ Windows Forms Examples";
+			this->Text = L"RFID";
+			this->grpPorts->ResumeLayout(false);
+			this->grpPorts->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
 		}
 #pragma endregion
+		 private: void findPorts(void)
+             {
+            // get port names
+            array<Object^>^ objectArray = SerialPort::GetPortNames();
+            // add string array to combobox
+            this->comboBox1->Items->AddRange( objectArray );
+ 
+             }
 
+private: System::Void btnOpen_Click(System::Object^  sender, System::EventArgs^  e) {
+	// set COM port
+	/*
+	StringComparer^ stringComparer = StringComparer::OrdinalIgnoreCase;
+	if(stringComparer->Equals("COM Ports",this->comboBox1->Text)){
+		this->lblPortMsg->Text="Please Select COM Port";
+	}
+	else if(stringComparer->Equals("Baud rate",this->comboBox2->Text)){
+		this->lblPortMsg->Text="Please Select Baud Rate";
+	}
+	else{
+	*/
+		if(!this->_serialPort->IsOpen){
+			this->_serialPort->PortName=this->comboBox1->Text;
+			//this->textBox1->Text=this->comboBox1->Text;
+			this->_serialPort->BaudRate=Int32::Parse(this->comboBox2->Text);
+			//this->textBox1->Text=this->comboBox2->Text;
+			//  this->lblPortMsg->Text="Enter Message Here";
+
+			//open serial port 
+			this->_serialPort->Open();
+		}
+		// is open status
+		if(this->_serialPort->IsOpen) this->progressBar1->Value=100; 
+	//}
+}
+
+private: System::Void btnClosePort_Click(System::Object^  sender, System::EventArgs^  e) {
+		//close serialPort
+                 this->_serialPort->Close();
+                 if(!this->_serialPort->IsOpen){
+                        this->progressBar1->Value=0;
+                    }
+
+		 }
 };
 }
