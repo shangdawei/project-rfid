@@ -58,7 +58,62 @@ namespace wforms {
 			}
 		}
 
+	/* private: System::Void Data_Received(System::Object ^ sender, System::IO::Ports::SerialDataReceivedEventArgs ^e){
+        String ^text = this->_serialPort->ReadLine();
+        this->RFID->Text = text;
+       }*/
+
 	private:
+	System::Void DataReceivedHandler(System::Object^ sender,SerialDataReceivedEventArgs^ e)
+    {
+	//SerialPort^ sp = (SerialPort^)sender;
+	//String^ indata = sp->ReadExisting();
+	try {
+		String^ indata = this->_serialPort->ReadLine();
+	}
+	catch (TimeoutException ^) {
+		//String^ indata = "TIMEOUT";
+	}
+
+	if (RFID->InvokeRequired){
+		RFID->Invoke(
+			gcnew System::IO::Ports::SerialDataReceivedEventHandler(this,&wforms::MainForm::DataReceivedHandler),
+			gcnew array<System::Object^> { sender, e }
+		);
+		
+	}
+	else {
+		try {
+			String^ indata = this->_serialPort->ReadLine();
+			RFID->Text = indata;
+			//AddMessage(String::Format("DATA <{0}>",indata));
+		}
+		catch (TimeoutException ^) {
+			this->lblPortMsg->Text = "TIMEOUT";
+		}
+
+		
+		// your original code here
+	}
+
+		
+     // RFID->Text = "TEST";
+		//Console::WriteLine("Data Received:");
+    }
+	/*
+	System::Void DataReceivedHandler(System::Object ^ sender, System::IO::Ports::SerialDataReceivedEventArgs ^e){
+	//System::Void DataReceivedHandler(Object^ sender,SerialDataReceivedEventArgs^ e){
+			SerialPort^ sp = (SerialPort^)sender;
+			String^ indata = sp->ReadLine();
+			//RFID->Text = indata;
+			//this->lblPortMsg->Text="Data Received:";
+			AddMessage("Data Received:");
+			//Console::WriteLine("Data Received:");
+			//Console::Write(indata);
+		}
+	*/
+
+
 		// Insert a text string into the output list control
 		Void AddMessage(String^ msg)
 		{
@@ -209,6 +264,7 @@ private: System::Windows::Forms::Button^  btnClosePort;
 private: System::Windows::Forms::Label^  lblPortMsg;
 private: System::Windows::Forms::ComboBox^  comboBox2;
 private: System::IO::Ports::SerialPort^  _serialPort;
+private: System::Windows::Forms::Button^  btnTest;
 
 
 private: System::ComponentModel::IContainer^  components;
@@ -242,6 +298,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->lblPortMsg = (gcnew System::Windows::Forms::Label());
 			this->btnClosePort = (gcnew System::Windows::Forms::Button());
 			this->_serialPort = (gcnew System::IO::Ports::SerialPort(this->components));
+			this->btnTest = (gcnew System::Windows::Forms::Button());
 			label1 = (gcnew System::Windows::Forms::Label());
 			label2 = (gcnew System::Windows::Forms::Label());
 			label3 = (gcnew System::Windows::Forms::Label());
@@ -419,6 +476,16 @@ private: System::ComponentModel::IContainer^  components;
 			this->btnClosePort->UseVisualStyleBackColor = true;
 			this->btnClosePort->Click += gcnew System::EventHandler(this, &MainForm::btnClosePort_Click);
 			// 
+			// btnTest
+			// 
+			this->btnTest->Location = System::Drawing::Point(295, 200);
+			this->btnTest->Name = L"btnTest";
+			this->btnTest->Size = System::Drawing::Size(75, 23);
+			this->btnTest->TabIndex = 15;
+			this->btnTest->Text = L"TEST";
+			this->btnTest->UseVisualStyleBackColor = true;
+			this->btnTest->Click += gcnew System::EventHandler(this, &MainForm::btnTest_Click);
+			// 
 			// MainForm
 			// 
 			this->AcceptButton = this->connectButton_;
@@ -427,6 +494,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->CancelButton = this->closeButton_;
 			this->ClientSize = System::Drawing::Size(781, 309);
 			this->ControlBox = false;
+			this->Controls->Add(this->btnTest);
 			this->Controls->Add(this->grpPorts);
 			this->Controls->Add(this->RFID);
 			this->Controls->Add(label4);
@@ -463,7 +531,7 @@ private: System::ComponentModel::IContainer^  components;
 
 private: System::Void btnOpen_Click(System::Object^  sender, System::EventArgs^  e) {
 	// set COM port
-	/*
+	
 	StringComparer^ stringComparer = StringComparer::OrdinalIgnoreCase;
 	if(stringComparer->Equals("COM Ports",this->comboBox1->Text)){
 		this->lblPortMsg->Text="Please Select COM Port";
@@ -472,7 +540,7 @@ private: System::Void btnOpen_Click(System::Object^  sender, System::EventArgs^ 
 		this->lblPortMsg->Text="Please Select Baud Rate";
 	}
 	else{
-	*/
+	
 		if(!this->_serialPort->IsOpen){
 			this->_serialPort->PortName=this->comboBox1->Text;
 			//this->textBox1->Text=this->comboBox1->Text;
@@ -480,12 +548,20 @@ private: System::Void btnOpen_Click(System::Object^  sender, System::EventArgs^ 
 			//this->textBox1->Text=this->comboBox2->Text;
 			//  this->lblPortMsg->Text="Enter Message Here";
 
+			// ADDING EVENT HANDLER - @TODO-JET ; ADD EVENT HANDLER (READ THE DATA RECEIVED)
+			this->_serialPort->ReadTimeout = 500;
+			this->_serialPort->DataReceived += gcnew SerialDataReceivedEventHandler(this,&wforms::MainForm::DataReceivedHandler);
+			//SerialPort ^sp = gcnew SerialPort("COM3");
+			//sp->DataReceived::add(gcnew SerialDataReceivedEventHandler(this,&wforms::MainForm::DataReceivedHandler));
+
 			//open serial port 
 			this->_serialPort->Open();
+			
+
 		}
 		// is open status
 		if(this->_serialPort->IsOpen) this->progressBar1->Value=100; 
-	//}
+	}
 }
 
 private: System::Void btnClosePort_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -495,6 +571,19 @@ private: System::Void btnClosePort_Click(System::Object^  sender, System::EventA
                         this->progressBar1->Value=0;
                     }
 
+		 }
+private: System::Void btnTest_Click(System::Object^  sender, System::EventArgs^  e) {
+			 // add sender name
+                 String^ name = this->_serialPort->PortName;
+                 // grab text and store in send buffer
+                 String^ message = "TEST MESSAGE";
+                 // write to serial
+                 if(this->_serialPort->IsOpen){
+                    this->_serialPort->WriteLine(String::Format("<{0}>: {1}",name,message));
+					this->lblPortMsg->Text=String::Format("SENT <{0}>: {1}",this->_serialPort->PortName,message);
+				 }
+                 else
+                    this->lblPortMsg->Text="Port Not Opened";
 		 }
 };
 }

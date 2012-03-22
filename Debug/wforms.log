@@ -1,27 +1,27 @@
-﻿Build started 3/22/2012 7:57:18 PM.
-     1>Project "C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\wforms.vcxproj" on node 2 (build target(s)).
+﻿Build started 3/22/2012 11:46:10 PM.
+     1>Project "C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\wforms.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "Debug\wforms.unsuccessfulbuild" because "AlwaysCreate" was specified.
        GenerateTargetFrameworkMonikerAttribute:
        Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
        ClCompile:
-         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\..\lib /I"C:\Program Files\MySQL\MySQL Server 5.1\include" /AI"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0" /Zi /clr /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _UNICODE /D UNICODE /EHa /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /TP /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Core.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Data.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Drawing.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Windows.Forms.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Xml.dll" /analyze- /errorReport:prompt wforms.cpp /clr:nostdlib 
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I"C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\lib" /I..\..\..\lib /I"C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\include" /AI"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0" /Zi /clr /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _UNICODE /D UNICODE /EHa /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc100.pdb" /TP /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Core.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Data.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Drawing.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Windows.Forms.dll" /FU"C:\Program Files\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\System.Xml.dll" /analyze- /errorReport:prompt wforms.cpp /clr:nostdlib 
          wforms.cpp
          All outputs are up-to-date.
        CoreResGen:
          All outputs are up-to-date.
        Link:
-         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\Debug\wforms.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\lib" mysqlpp_d.lib libmysql.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /ASSEMBLYRESOURCE:Debug\wforms.MainForm.resources /MANIFEST /ManifestFile:"Debug\wforms.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\Debug\wforms.pdb" /ASSEMBLYDEBUG /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"main" /DYNAMICBASE:NO /FIXED:NO /MACHINE:X86 Debug\AssemblyInfo.obj
+         C:\Program Files\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\Debug\wforms.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\lib" mysqlpp_d.lib libmysql.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /ASSEMBLYRESOURCE:Debug\wforms.MainForm.resources /MANIFEST /ManifestFile:"Debug\wforms.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\Debug\wforms.pdb" /ASSEMBLYDEBUG /SUBSYSTEM:WINDOWS /TLBID:1 /ENTRY:"main" /DYNAMICBASE:NO /FIXED:NO /MACHINE:X86 Debug\AssemblyInfo.obj
          Debug\wforms.obj
          "Debug\.NETFramework,Version=v4.0.AssemblyAttributes.obj"
-         wforms.vcxproj -> C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\Debug\wforms.exe
+         wforms.vcxproj -> C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\Debug\wforms.exe
        Manifest:
-         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\Debug\wforms.exe;#1" /manifest Debug\wforms.exe.intermediate.manifest
+         C:\Program Files\Microsoft SDKs\Windows\v7.0A\bin\mt.exe /nologo /verbose /outputresource:"C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\Debug\wforms.exe;#1" /manifest Debug\wforms.exe.intermediate.manifest
        FinalizeBuildStatus:
          Deleting file "Debug\wforms.unsuccessfulbuild".
          Touching "Debug\wforms.lastbuildstate".
-     1>Done Building Project "C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\wforms.vcxproj" (build target(s)).
+     1>Done Building Project "C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\wforms.vcxproj" (build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:02.98
+Time Elapsed 00:00:03.06
