@@ -49,7 +49,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\lib;..\..\..\lib;C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\include;..\..\..\lib;C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -59,7 +59,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>mysqlpp_d.lib;libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Documents and Settings\jet\Desktop\mysql++-3.1.0-jet\mysql++-3.1.0\examples\vstudio\wforms\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AssemblyDebug>true</AssemblyDebug>
       <SubSystem>Windows</SubSystem>

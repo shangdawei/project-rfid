@@ -68,7 +68,6 @@ namespace wforms {
 	System::Void DataReceivedHandler(System::Object^ sender,SerialDataReceivedEventArgs^ e)
     {
 		this->lblPortMsg->Text = "";
-		//Sleep(400);
 
 	if (RFID->InvokeRequired){
 		RFID->Invoke(
@@ -89,21 +88,7 @@ namespace wforms {
 
 	} 
 }
-	/*
-	System::Void DataReceivedHandler(System::Object ^ sender, System::IO::Ports::SerialDataReceivedEventArgs ^e){
-	//System::Void DataReceivedHandler(Object^ sender,SerialDataReceivedEventArgs^ e){
-			SerialPort^ sp = (SerialPort^)sender;
-			String^ indata = sp->ReadLine();
-			//RFID->Text = indata;
-			//this->lblPortMsg->Text="Data Received:";
-			AddMessage("Data Received:");
-			//Console::WriteLine("Data Received:");
-			//Console::Write(indata);
-		}
-	*/
-
-
-		// Insert a text string into the output list control
+	// Insert a text string into the output list control
 		Void AddMessage(String^ msg)
 		{
 			resultsList_->Items->Add(msg);
@@ -143,6 +128,9 @@ namespace wforms {
 				AddMessage("Failed to connect to server:");
 				AddMessage(gcnew String(con.error()));
 				return;
+			}
+			else{
+				lblDBConnection->Text = "Connected";
 			}
 
 			// Retrieve a subset of the sample stock table set up by resetdb
@@ -254,6 +242,8 @@ private: System::Windows::Forms::Label^  lblPortMsg;
 private: System::Windows::Forms::ComboBox^  comboBox2;
 private: System::IO::Ports::SerialPort^  _serialPort;
 private: System::Windows::Forms::Button^  btnTest;
+private: System::Windows::Forms::GroupBox^  groupBox1;
+private: System::Windows::Forms::Label^  lblDBConnection;
 
 
 private: System::ComponentModel::IContainer^  components;
@@ -288,11 +278,14 @@ private: System::ComponentModel::IContainer^  components;
 			this->btnClosePort = (gcnew System::Windows::Forms::Button());
 			this->_serialPort = (gcnew System::IO::Ports::SerialPort(this->components));
 			this->btnTest = (gcnew System::Windows::Forms::Button());
+			this->groupBox1 = (gcnew System::Windows::Forms::GroupBox());
+			this->lblDBConnection = (gcnew System::Windows::Forms::Label());
 			label1 = (gcnew System::Windows::Forms::Label());
 			label2 = (gcnew System::Windows::Forms::Label());
 			label3 = (gcnew System::Windows::Forms::Label());
 			label4 = (gcnew System::Windows::Forms::Label());
 			this->grpPorts->SuspendLayout();
+			this->groupBox1->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// label1
@@ -328,7 +321,7 @@ private: System::ComponentModel::IContainer^  components;
 			// label4
 			// 
 			label4->AutoSize = true;
-			label4->Location = System::Drawing::Point(25, 92);
+			label4->Location = System::Drawing::Point(19, 147);
 			label4->Name = L"label4";
 			label4->Size = System::Drawing::Size(45, 13);
 			label4->TabIndex = 9;
@@ -361,7 +354,7 @@ private: System::ComponentModel::IContainer^  components;
 			// 
 			this->resultsList_->Enabled = false;
 			this->resultsList_->FormattingEnabled = true;
-			this->resultsList_->Location = System::Drawing::Point(70, 88);
+			this->resultsList_->Location = System::Drawing::Point(70, 147);
 			this->resultsList_->Name = L"resultsList_";
 			this->resultsList_->Size = System::Drawing::Size(228, 95);
 			this->resultsList_->TabIndex = 3;
@@ -467,13 +460,31 @@ private: System::ComponentModel::IContainer^  components;
 			// 
 			// btnTest
 			// 
-			this->btnTest->Location = System::Drawing::Point(295, 200);
+			this->btnTest->Location = System::Drawing::Point(358, 248);
 			this->btnTest->Name = L"btnTest";
 			this->btnTest->Size = System::Drawing::Size(75, 23);
 			this->btnTest->TabIndex = 15;
 			this->btnTest->Text = L"TEST";
 			this->btnTest->UseVisualStyleBackColor = true;
 			this->btnTest->Click += gcnew System::EventHandler(this, &MainForm::btnTest_Click);
+			// 
+			// groupBox1
+			// 
+			this->groupBox1->Controls->Add(this->lblDBConnection);
+			this->groupBox1->Location = System::Drawing::Point(17, 93);
+			this->groupBox1->Name = L"groupBox1";
+			this->groupBox1->Size = System::Drawing::Size(261, 48);
+			this->groupBox1->TabIndex = 16;
+			this->groupBox1->TabStop = false;
+			this->groupBox1->Text = L"Database Connection Status";
+			// 
+			// lblDBConnection
+			// 
+			this->lblDBConnection->AutoSize = true;
+			this->lblDBConnection->Location = System::Drawing::Point(15, 20);
+			this->lblDBConnection->Name = L"lblDBConnection";
+			this->lblDBConnection->Size = System::Drawing::Size(0, 13);
+			this->lblDBConnection->TabIndex = 0;
 			// 
 			// MainForm
 			// 
@@ -483,6 +494,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->CancelButton = this->closeButton_;
 			this->ClientSize = System::Drawing::Size(781, 309);
 			this->ControlBox = false;
+			this->Controls->Add(this->groupBox1);
 			this->Controls->Add(this->btnTest);
 			this->Controls->Add(this->grpPorts);
 			this->Controls->Add(this->RFID);
@@ -504,6 +516,8 @@ private: System::ComponentModel::IContainer^  components;
 			this->Text = L"RFID";
 			this->grpPorts->ResumeLayout(false);
 			this->grpPorts->PerformLayout();
+			this->groupBox1->ResumeLayout(false);
+			this->groupBox1->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
