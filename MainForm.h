@@ -27,7 +27,11 @@
 #pragma once
 
 #include <mysql++.h>
+#include <algorithm>
 #include <string>
+#include <boost/algorithm/string.hpp>
+
+
 namespace wforms {
 
 	using namespace Microsoft::Win32;
@@ -38,6 +42,8 @@ namespace wforms {
 	using namespace System::Data;
 	using namespace System::Drawing;
 	using namespace System::IO::Ports;
+	using namespace std;
+	using namespace boost::algorithm;
 
 	public ref class MainForm : public System::Windows::Forms::Form
 	{
@@ -62,7 +68,8 @@ namespace wforms {
         String ^text = this->_serialPort->ReadLine();
         this->RFID->Text = text;
        }*/
-
+	
+	
 
 	private:
 	System::Void DataReceivedHandler(System::Object^ sender,SerialDataReceivedEventArgs^ e)
@@ -78,9 +85,8 @@ namespace wforms {
 	}
 	else {
 		try {
-			String^ indata = this->_serialPort->ReadLine();
-			RFID->Text = indata;
-			//AddMessage(String::Format("DATA <{0}>",indata));
+			System::String^ indata = this->_serialPort->ReadLine();
+			this->RFID->Text = indata;
 		}
 		catch (TimeoutException ^) {
 			this->lblPortMsg->Text = "TIMEOUT";
@@ -105,11 +111,125 @@ namespace wforms {
 		// some GUI overhead.
 		Void ConnectButton_Click(Object^ sender, EventArgs^ e)
 		{
+			const int kInputBufSize = 100;
+			char acServerAddress[kInputBufSize];
+			char acUserName[kInputBufSize];
+			char acPassword[kInputBufSize];
+			char tmpRFID[kInputBufSize];
+			ToUTF8(acServerAddress, kInputBufSize, serverAddress_->Text);
+			ToUTF8(acUserName, kInputBufSize, userName_->Text);
+			ToUTF8(acPassword, kInputBufSize, password_->Text);
+			ToUTF8(tmpRFID, kInputBufSize, RFID->Text);
+
+			// Connect to the sample database.
+			mysqlpp::Connection con(false);
+			if (!con.connect("test", acServerAddress, acUserName, acPassword)) {
+				lblDBConnection->Text = gcnew String(con.error());
+				return;
+			}
+			else{
+				if(con.connected())
+					lblDBConnection->Text = "Connected"; 
+				else lblDBConnection->Text = "Not Connected";
+
+				//lblDBConnection->Text = std::boolalpha ;
+			}
 			
+		}
+
+		private: System::Void RFID_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 			// Clear out the results list, in case this isn't the first time
 			// we've come in here.
 			resultsList_->Items->Clear();
+			lblDBConnection->Text = "";
+			mysqlpp::Connection con(false);
+			const int kInputBufSize = 100;
+			char acServerAddress[kInputBufSize];
+			char acUserName[kInputBufSize];
+			char acPassword[kInputBufSize];
+			char tmpRFID[kInputBufSize];
+			ToUTF8(acServerAddress, kInputBufSize, serverAddress_->Text);
+			ToUTF8(acUserName, kInputBufSize, userName_->Text);
+			ToUTF8(acPassword, kInputBufSize, password_->Text);
+			ToUTF8(tmpRFID, kInputBufSize, RFID->Text);
+			if (!con.connect("test", acServerAddress, acUserName, acPassword)) {
+				lblDBConnection->Text = gcnew String(con.error());
+				return;
+			}
 
+			if(con.connected()){				
+				lblDBConnection->Text = "Connected";
+
+				//std::string strTest ("SELECT * FROM login WHERE cardnum = '");
+				//std::string ID = tmpRFID;
+
+						char buff[100];
+
+						string str1(tmpRFID);
+						trim(str1);
+						//trim(str);
+						//str.erase(str.end()-1, 1);
+
+						//String^ temp = gcnew String(str.c_str());
+						//textBox1->Text = str;  
+						
+					//std::string tempRFID = tmpRFID;
+					//tempRFID.erase(std::remove(tempRFID.begin(), tempRFID.end(), '\n'), tempRFID.end());
+
+				  sprintf(buff, "SELECT * FROM login WHERE cardnum = '%s';", str1);
+				  std::string buffAsStdStr = buff;
+				  String^ temp = gcnew String(buffAsStdStr.c_str());
+				 
+				 
+				  textBox1->Text = temp;  
+
+				//std::string strTest ("SELECT * FROM login WHERE cardnum = '");
+				//String::Format("<{0}>: {1}",name,message)
+				
+				//std::string x;
+				//x = strTest + tmpRFID; x = x+"'";
+
+				const char* myQuery = buffAsStdStr.c_str();
+
+
+
+				//mysqlpp::SQLQueryParms sqp;
+				//sqp << "SELECT * FROM login WHERE cardnum = '4800EC73D90E'";
+				mysqlpp::Query query = con.query("SELECT * FROM login WHERE cardnum = %0q");
+
+				
+				query.parse();
+
+				//String^ message = "4800EC73D90E";
+
+				
+
+				//std::string Model(tmpRFID);
+					//String^ MyString = gcnew String(Model.c_str());
+
+					mysqlpp::SQLQueryParms sqp;
+				sqp << tmpRFID;
+			
+				if (mysqlpp::StoreQueryResult res = query.store(str1)) {
+					//lblDBConnection->Text = gcnew String(query.info());
+					//std::string Model(query.info());
+					//String^ MyString = gcnew String(Model.c_str());
+
+					//AddMessage(MyString); AddMessage("BWISIT");
+					for (size_t i = 0; i < res.num_rows(); ++i) {
+							AddMessage(ToUCS2(res[i]["firstname"]));
+					}
+					SaveInputs();
+				}
+				else {
+					lblDBConnection->Text = "CHK2";
+					// Retreive failed
+					AddMessage("Failed to get item list:");
+					AddMessage(ToUCS2(query.error()));
+				}
+
+			} else lblDBConnection->Text = "Not Connected";
+			/*
 			// Translate the Unicode text we get from the UI into the UTF-8
 			// form that MySQL wants.
 			const int kInputBufSize = 100;
@@ -124,9 +244,8 @@ namespace wforms {
 
 			// Connect to the sample database.
 			mysqlpp::Connection con(false);
-			if (!con.connect("test", acServerAddress, acUserName, acPassword)) {
-				AddMessage("Failed to connect to server:");
-				AddMessage(gcnew String(con.error()));
+			if (!con.connect("test", acServerAddress, acUserName, acPassword)) {				
+				lblDBConnection->Text = gcnew String(con.error());
 				return;
 			}
 			else{
@@ -134,12 +253,16 @@ namespace wforms {
 			}
 
 			// Retrieve a subset of the sample stock table set up by resetdb
-			mysqlpp::Query query = con.query("SELECT * FROM login WHERE loginid = %0q");		
+			//4800EC73D90E
+			mysqlpp::Query query = con.query("SELECT * FROM login WHERE cardnum = %0q");
 			query.parse();
+			mysqlpp::SQLQueryParms sqp;
+			sqp << tmpRFID;
 			
-			if (mysqlpp::StoreQueryResult res = query.store(tmpRFID)) {
+			if (mysqlpp::StoreQueryResult res = query.store(sqp)) {
 				for (size_t i = 0; i < res.num_rows(); ++i) {
 						AddMessage(ToUCS2(res[i]["firstname"]));
+						AddMessage("ASD");
 				}
 				SaveInputs();
 			}
@@ -148,10 +271,7 @@ namespace wforms {
 				AddMessage("Failed to get item list:");
 				AddMessage(ToUCS2(query.error()));
 			}
-		}
-
-		private: System::Void RFID_TextChanged(System::Object^  sender, System::EventArgs^  e) {
-
+			*/
 		 }
 
 
@@ -244,6 +364,8 @@ private: System::IO::Ports::SerialPort^  _serialPort;
 private: System::Windows::Forms::Button^  btnTest;
 private: System::Windows::Forms::GroupBox^  groupBox1;
 private: System::Windows::Forms::Label^  lblDBConnection;
+private: System::Windows::Forms::TextBox^  textBox1;
+
 
 
 private: System::ComponentModel::IContainer^  components;
@@ -280,6 +402,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->btnTest = (gcnew System::Windows::Forms::Button());
 			this->groupBox1 = (gcnew System::Windows::Forms::GroupBox());
 			this->lblDBConnection = (gcnew System::Windows::Forms::Label());
+			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
 			label1 = (gcnew System::Windows::Forms::Label());
 			label2 = (gcnew System::Windows::Forms::Label());
 			label3 = (gcnew System::Windows::Forms::Label());
@@ -473,7 +596,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox1->Controls->Add(this->lblDBConnection);
 			this->groupBox1->Location = System::Drawing::Point(17, 93);
 			this->groupBox1->Name = L"groupBox1";
-			this->groupBox1->Size = System::Drawing::Size(261, 48);
+			this->groupBox1->Size = System::Drawing::Size(348, 39);
 			this->groupBox1->TabIndex = 16;
 			this->groupBox1->TabStop = false;
 			this->groupBox1->Text = L"Database Connection Status";
@@ -481,10 +604,17 @@ private: System::ComponentModel::IContainer^  components;
 			// lblDBConnection
 			// 
 			this->lblDBConnection->AutoSize = true;
-			this->lblDBConnection->Location = System::Drawing::Point(15, 20);
+			this->lblDBConnection->Location = System::Drawing::Point(15, 17);
 			this->lblDBConnection->Name = L"lblDBConnection";
 			this->lblDBConnection->Size = System::Drawing::Size(0, 13);
 			this->lblDBConnection->TabIndex = 0;
+			// 
+			// textBox1
+			// 
+			this->textBox1->Location = System::Drawing::Point(35, 269);
+			this->textBox1->Name = L"textBox1";
+			this->textBox1->Size = System::Drawing::Size(100, 20);
+			this->textBox1->TabIndex = 17;
 			// 
 			// MainForm
 			// 
@@ -494,6 +624,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->CancelButton = this->closeButton_;
 			this->ClientSize = System::Drawing::Size(781, 309);
 			this->ControlBox = false;
+			this->Controls->Add(this->textBox1);
 			this->Controls->Add(this->groupBox1);
 			this->Controls->Add(this->btnTest);
 			this->Controls->Add(this->grpPorts);
@@ -553,6 +684,7 @@ private: System::Void btnOpen_Click(System::Object^  sender, System::EventArgs^ 
 
 			// ADDING EVENT HANDLER - @TODO-JET ; ADD EVENT HANDLER (READ THE DATA RECEIVED)
 			this->_serialPort->ReadTimeout = 500;
+			
 			this->_serialPort->DataReceived += gcnew SerialDataReceivedEventHandler(this,&wforms::MainForm::DataReceivedHandler);
 			//SerialPort ^sp = gcnew SerialPort("COM3");
 			//sp->DataReceived::add(gcnew SerialDataReceivedEventHandler(this,&wforms::MainForm::DataReceivedHandler));
@@ -576,7 +708,9 @@ private: System::Void btnClosePort_Click(System::Object^  sender, System::EventA
 
 		 }
 private: System::Void btnTest_Click(System::Object^  sender, System::EventArgs^  e) {
-			 // add sender name
+			 lblDBConnection->Text = ""; 
+			/*
+			// add sender name
                  String^ name = this->_serialPort->PortName;
                  // grab text and store in send buffer
                  String^ message = "TEST MESSAGE";
@@ -587,6 +721,7 @@ private: System::Void btnTest_Click(System::Object^  sender, System::EventArgs^ 
 				 }
                  else
                     this->lblPortMsg->Text="Port Not Opened";
+			*/
 		 }
 };
 }
