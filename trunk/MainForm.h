@@ -63,17 +63,12 @@ namespace wforms {
         this->RFID->Text = text;
        }*/
 
+
 	private:
 	System::Void DataReceivedHandler(System::Object^ sender,SerialDataReceivedEventArgs^ e)
     {
-	//SerialPort^ sp = (SerialPort^)sender;
-	//String^ indata = sp->ReadExisting();
-	try {
-		String^ indata = this->_serialPort->ReadLine();
-	}
-	catch (TimeoutException ^) {
-		//String^ indata = "TIMEOUT";
-	}
+		this->lblPortMsg->Text = "";
+		//Sleep(400);
 
 	if (RFID->InvokeRequired){
 		RFID->Invoke(
@@ -92,14 +87,8 @@ namespace wforms {
 			this->lblPortMsg->Text = "TIMEOUT";
 		}
 
-		
-		// your original code here
-	}
-
-		
-     // RFID->Text = "TEST";
-		//Console::WriteLine("Data Received:");
-    }
+	} 
+}
 	/*
 	System::Void DataReceivedHandler(System::Object ^ sender, System::IO::Ports::SerialDataReceivedEventArgs ^e){
 	//System::Void DataReceivedHandler(Object^ sender,SerialDataReceivedEventArgs^ e){
