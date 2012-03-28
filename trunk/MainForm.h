@@ -100,43 +100,23 @@ namespace wforms {
 			resultsList_->Items->Add(msg);
 		}
 
+		Void ProcessAccess(String^ access){
+			if(access == "Access Granted"){
+				this->_serialPort->WriteLine("1");
+			}
+			else {
+				// DO NOTIFY ADMIN
+				this->_serialPort->WriteLine("0");
+			}
+		}
+
 		// Handle Close button click by shutting down application
 		Void CloseButton_Click(Object^ sender, EventArgs^ e)
 		{
 			Application::Exit();
 		}
 		
-		// Handle Connect button click.  The body of this function is
-		// essentially the same as the simple2 command line example, with
-		// some GUI overhead.
-		Void ConnectButton_Click(Object^ sender, EventArgs^ e)
-		{
-			const int kInputBufSize = 100;
-			char acServerAddress[kInputBufSize];
-			char acUserName[kInputBufSize];
-			char acPassword[kInputBufSize];
-			char tmpRFID[kInputBufSize];
-			ToUTF8(acServerAddress, kInputBufSize, serverAddress_->Text);
-			ToUTF8(acUserName, kInputBufSize, userName_->Text);
-			ToUTF8(acPassword, kInputBufSize, password_->Text);
-			ToUTF8(tmpRFID, kInputBufSize, RFID->Text);
-
-			// Connect to the sample database.
-			mysqlpp::Connection con(false);
-			if (!con.connect("test", acServerAddress, acUserName, acPassword)) {
-				lblDBConnection->Text = gcnew String(con.error());
-				return;
-			}
-			else{
-				if(con.connected())
-					lblDBConnection->Text = "Connected"; 
-				else lblDBConnection->Text = "Not Connected";
-
-				//lblDBConnection->Text = std::boolalpha ;
-			}
-			
-		}
-
+		
 		private: System::Void RFID_TextChanged(System::Object^  sender, System::EventArgs^  e) {
 			// Clear out the results list, in case this isn't the first time
 			// we've come in here.
@@ -160,118 +140,53 @@ namespace wforms {
 			if(con.connected()){				
 				lblDBConnection->Text = "Connected";
 
-				//std::string strTest ("SELECT * FROM login WHERE cardnum = '");
-				//std::string ID = tmpRFID;
+				//char buff[100];
 
-						char buff[100];
+				string str1(tmpRFID);
+				trim(str1);
 
-						string str1(tmpRFID);
-						trim(str1);
-						//trim(str);
-						//str.erase(str.end()-1, 1);
-
-						//String^ temp = gcnew String(str.c_str());
-						//textBox1->Text = str;  
-						
-					//std::string tempRFID = tmpRFID;
-					//tempRFID.erase(std::remove(tempRFID.begin(), tempRFID.end(), '\n'), tempRFID.end());
-
-				  sprintf(buff, "SELECT * FROM login WHERE cardnum = '%s';", str1);
-				  std::string buffAsStdStr = buff;
-				  String^ temp = gcnew String(buffAsStdStr.c_str());
+				//sprintf(buff, "SELECT * FROM login WHERE cardnum = '%s';", str1);
+				//std::string buffAsStdStr = buff;
+				//String^ temp = gcnew String(buffAsStdStr.c_str());
 				 
 				 
-				  textBox1->Text = temp;  
+				//textBox1->Text = temp;
+				//const char* myQuery = buffAsStdStr.c_str();
 
-				//std::string strTest ("SELECT * FROM login WHERE cardnum = '");
-				//String::Format("<{0}>: {1}",name,message)
-				
-				//std::string x;
-				//x = strTest + tmpRFID; x = x+"'";
-
-				const char* myQuery = buffAsStdStr.c_str();
-
-
-
-				//mysqlpp::SQLQueryParms sqp;
-				//sqp << "SELECT * FROM login WHERE cardnum = '4800EC73D90E'";
-				mysqlpp::Query query = con.query("SELECT * FROM login WHERE cardnum = %0q");
-
-				
+				mysqlpp::Query query = con.query("SELECT * FROM login WHERE cardnum = %0q");				
 				query.parse();
 
-				//String^ message = "4800EC73D90E";
-
-				
-
-				//std::string Model(tmpRFID);
-					//String^ MyString = gcnew String(Model.c_str());
-
-					mysqlpp::SQLQueryParms sqp;
-				sqp << tmpRFID;
+				//mysqlpp::SQLQueryParms sqp;
+				//sqp << tmpRFID;
 			
-				if (mysqlpp::StoreQueryResult res = query.store(str1)) {
-					//lblDBConnection->Text = gcnew String(query.info());
-					//std::string Model(query.info());
-					//String^ MyString = gcnew String(Model.c_str());
-
-					//AddMessage(MyString); AddMessage("BWISIT");
+				if (mysqlpp::StoreQueryResult res = query.store(str1)) {					
 					for (size_t i = 0; i < res.num_rows(); ++i) {
-							AddMessage(ToUCS2(res[i]["firstname"]));
+							AddMessage("Firstname: " + ToUCS2(res[i]["firstname"]));
+							AddMessage("Lastname: " + ToUCS2(res[i]["lastname"]));
+							AddMessage("Last Access: " + ToUCS2(res[i]["lastlogin"]));
+							String^ isBanned = ToUCS2(res[i]["banned"]);
+							if(isBanned == "1"){
+								AddMessage("Banned : Yes");
+
+								ProcessAccess("Access Denied");
+							}
+							else {
+								AddMessage("Banned : No");
+								ProcessAccess("Access Granted");
+							}
+
+
 					}
 					SaveInputs();
 				}
 				else {
-					lblDBConnection->Text = "CHK2";
 					// Retreive failed
 					AddMessage("Failed to get item list:");
 					AddMessage(ToUCS2(query.error()));
 				}
 
 			} else lblDBConnection->Text = "Not Connected";
-			/*
-			// Translate the Unicode text we get from the UI into the UTF-8
-			// form that MySQL wants.
-			const int kInputBufSize = 100;
-			char acServerAddress[kInputBufSize];
-			char acUserName[kInputBufSize];
-			char acPassword[kInputBufSize];
-			char tmpRFID[kInputBufSize];
-			ToUTF8(acServerAddress, kInputBufSize, serverAddress_->Text);
-			ToUTF8(acUserName, kInputBufSize, userName_->Text);
-			ToUTF8(acPassword, kInputBufSize, password_->Text);
-			ToUTF8(tmpRFID, kInputBufSize, RFID->Text);
-
-			// Connect to the sample database.
-			mysqlpp::Connection con(false);
-			if (!con.connect("test", acServerAddress, acUserName, acPassword)) {				
-				lblDBConnection->Text = gcnew String(con.error());
-				return;
-			}
-			else{
-				lblDBConnection->Text = "Connected";
-			}
-
-			// Retrieve a subset of the sample stock table set up by resetdb
-			//4800EC73D90E
-			mysqlpp::Query query = con.query("SELECT * FROM login WHERE cardnum = %0q");
-			query.parse();
-			mysqlpp::SQLQueryParms sqp;
-			sqp << tmpRFID;
 			
-			if (mysqlpp::StoreQueryResult res = query.store(sqp)) {
-				for (size_t i = 0; i < res.num_rows(); ++i) {
-						AddMessage(ToUCS2(res[i]["firstname"]));
-						AddMessage("ASD");
-				}
-				SaveInputs();
-			}
-			else {
-				// Retreive failed
-				AddMessage("Failed to get item list:");
-				AddMessage(ToUCS2(query.error()));
-			}
-			*/
 		 }
 
 
@@ -350,21 +265,24 @@ namespace wforms {
 	private: System::Windows::Forms::TextBox^ password_;
 	private: System::Windows::Forms::TextBox^ userName_;
 	private: System::Windows::Forms::ListBox^ resultsList_;
-	private: System::Windows::Forms::Button^ connectButton_;
+
 	private: System::Windows::Forms::Button^ closeButton_;
-private: System::Windows::Forms::TextBox^  RFID;
-private: System::Windows::Forms::ComboBox^  comboBox1;
-private: System::Windows::Forms::ProgressBar^  progressBar1;
-private: System::Windows::Forms::Button^  btnOpen;
-private: System::Windows::Forms::GroupBox^  grpPorts;
-private: System::Windows::Forms::Button^  btnClosePort;
-private: System::Windows::Forms::Label^  lblPortMsg;
-private: System::Windows::Forms::ComboBox^  comboBox2;
-private: System::IO::Ports::SerialPort^  _serialPort;
-private: System::Windows::Forms::Button^  btnTest;
-private: System::Windows::Forms::GroupBox^  groupBox1;
-private: System::Windows::Forms::Label^  lblDBConnection;
-private: System::Windows::Forms::TextBox^  textBox1;
+	private: System::Windows::Forms::TextBox^  RFID;
+	private: System::Windows::Forms::ComboBox^  comboBox1;
+	private: System::Windows::Forms::ProgressBar^  progressBar1;
+	private: System::Windows::Forms::Button^  btnOpen;
+	private: System::Windows::Forms::GroupBox^  grpPorts;
+	private: System::Windows::Forms::Button^  btnClosePort;
+	private: System::Windows::Forms::Label^  lblPortMsg;
+	private: System::Windows::Forms::ComboBox^  comboBox2;
+	private: System::IO::Ports::SerialPort^  _serialPort;
+
+	private: System::Windows::Forms::GroupBox^  groupBox1;
+	private: System::Windows::Forms::Label^  lblDBConnection;
+
+	private: System::Windows::Forms::GroupBox^  groupBox2;
+	private: System::Windows::Forms::GroupBox^  groupBox3;
+private: System::Windows::Forms::GroupBox^  groupBox4;
 
 
 
@@ -383,12 +301,10 @@ private: System::ComponentModel::IContainer^  components;
 			System::Windows::Forms::Label^  label1;
 			System::Windows::Forms::Label^  label2;
 			System::Windows::Forms::Label^  label3;
-			System::Windows::Forms::Label^  label4;
 			this->serverAddress_ = (gcnew System::Windows::Forms::TextBox());
 			this->password_ = (gcnew System::Windows::Forms::TextBox());
 			this->userName_ = (gcnew System::Windows::Forms::TextBox());
 			this->resultsList_ = (gcnew System::Windows::Forms::ListBox());
-			this->connectButton_ = (gcnew System::Windows::Forms::Button());
 			this->closeButton_ = (gcnew System::Windows::Forms::Button());
 			this->RFID = (gcnew System::Windows::Forms::TextBox());
 			this->comboBox1 = (gcnew System::Windows::Forms::ComboBox());
@@ -399,22 +315,25 @@ private: System::ComponentModel::IContainer^  components;
 			this->lblPortMsg = (gcnew System::Windows::Forms::Label());
 			this->btnClosePort = (gcnew System::Windows::Forms::Button());
 			this->_serialPort = (gcnew System::IO::Ports::SerialPort(this->components));
-			this->btnTest = (gcnew System::Windows::Forms::Button());
 			this->groupBox1 = (gcnew System::Windows::Forms::GroupBox());
 			this->lblDBConnection = (gcnew System::Windows::Forms::Label());
-			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
+			this->groupBox2 = (gcnew System::Windows::Forms::GroupBox());
+			this->groupBox3 = (gcnew System::Windows::Forms::GroupBox());
+			this->groupBox4 = (gcnew System::Windows::Forms::GroupBox());
 			label1 = (gcnew System::Windows::Forms::Label());
 			label2 = (gcnew System::Windows::Forms::Label());
 			label3 = (gcnew System::Windows::Forms::Label());
-			label4 = (gcnew System::Windows::Forms::Label());
 			this->grpPorts->SuspendLayout();
 			this->groupBox1->SuspendLayout();
+			this->groupBox2->SuspendLayout();
+			this->groupBox3->SuspendLayout();
+			this->groupBox4->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// label1
 			// 
 			label1->AutoSize = true;
-			label1->Location = System::Drawing::Point(29, 13);
+			label1->Location = System::Drawing::Point(7, 18);
 			label1->Name = L"label1";
 			label1->Size = System::Drawing::Size(41, 13);
 			label1->TabIndex = 6;
@@ -424,7 +343,7 @@ private: System::ComponentModel::IContainer^  components;
 			// label2
 			// 
 			label2->AutoSize = true;
-			label2->Location = System::Drawing::Point(9, 39);
+			label2->Location = System::Drawing::Point(197, 17);
 			label2->Name = L"label2";
 			label2->Size = System::Drawing::Size(61, 13);
 			label2->TabIndex = 7;
@@ -434,33 +353,23 @@ private: System::ComponentModel::IContainer^  components;
 			// label3
 			// 
 			label3->AutoSize = true;
-			label3->Location = System::Drawing::Point(14, 65);
+			label3->Location = System::Drawing::Point(403, 17);
 			label3->Name = L"label3";
 			label3->Size = System::Drawing::Size(56, 13);
 			label3->TabIndex = 8;
 			label3->Text = L"Password:";
 			label3->TextAlign = System::Drawing::ContentAlignment::TopRight;
 			// 
-			// label4
-			// 
-			label4->AutoSize = true;
-			label4->Location = System::Drawing::Point(19, 147);
-			label4->Name = L"label4";
-			label4->Size = System::Drawing::Size(45, 13);
-			label4->TabIndex = 9;
-			label4->Text = L"Results:";
-			label4->TextAlign = System::Drawing::ContentAlignment::TopRight;
-			// 
 			// serverAddress_
 			// 
-			this->serverAddress_->Location = System::Drawing::Point(70, 9);
+			this->serverAddress_->Location = System::Drawing::Point(48, 16);
 			this->serverAddress_->Name = L"serverAddress_";
 			this->serverAddress_->Size = System::Drawing::Size(139, 20);
 			this->serverAddress_->TabIndex = 0;
 			// 
 			// password_
 			// 
-			this->password_->Location = System::Drawing::Point(70, 61);
+			this->password_->Location = System::Drawing::Point(460, 14);
 			this->password_->Name = L"password_";
 			this->password_->Size = System::Drawing::Size(139, 20);
 			this->password_->TabIndex = 2;
@@ -468,7 +377,7 @@ private: System::ComponentModel::IContainer^  components;
 			// 
 			// userName_
 			// 
-			this->userName_->Location = System::Drawing::Point(70, 35);
+			this->userName_->Location = System::Drawing::Point(258, 15);
 			this->userName_->Name = L"userName_";
 			this->userName_->Size = System::Drawing::Size(139, 20);
 			this->userName_->TabIndex = 1;
@@ -477,47 +386,37 @@ private: System::ComponentModel::IContainer^  components;
 			// 
 			this->resultsList_->Enabled = false;
 			this->resultsList_->FormattingEnabled = true;
-			this->resultsList_->Location = System::Drawing::Point(70, 147);
+			this->resultsList_->Location = System::Drawing::Point(5, 15);
 			this->resultsList_->Name = L"resultsList_";
-			this->resultsList_->Size = System::Drawing::Size(228, 95);
+			this->resultsList_->Size = System::Drawing::Size(188, 121);
 			this->resultsList_->TabIndex = 3;
 			this->resultsList_->TabStop = false;
-			// 
-			// connectButton_
-			// 
-			this->connectButton_->Location = System::Drawing::Point(224, 9);
-			this->connectButton_->Name = L"connectButton_";
-			this->connectButton_->Size = System::Drawing::Size(75, 23);
-			this->connectButton_->TabIndex = 3;
-			this->connectButton_->Text = L"Connect!";
-			this->connectButton_->UseVisualStyleBackColor = true;
-			this->connectButton_->Click += gcnew System::EventHandler(this, &MainForm::ConnectButton_Click);
 			// 
 			// closeButton_
 			// 
 			this->closeButton_->DialogResult = System::Windows::Forms::DialogResult::Cancel;
-			this->closeButton_->Location = System::Drawing::Point(224, 38);
+			this->closeButton_->Location = System::Drawing::Point(694, 5);
 			this->closeButton_->Name = L"closeButton_";
 			this->closeButton_->Size = System::Drawing::Size(75, 23);
 			this->closeButton_->TabIndex = 4;
-			this->closeButton_->Text = L"Close";
+			this->closeButton_->Text = L"Exit";
 			this->closeButton_->UseVisualStyleBackColor = true;
 			this->closeButton_->Click += gcnew System::EventHandler(this, &MainForm::CloseButton_Click);
 			// 
 			// RFID
 			// 
-			this->RFID->Location = System::Drawing::Point(427, 11);
+			this->RFID->Location = System::Drawing::Point(17, 19);
 			this->RFID->Name = L"RFID";
-			this->RFID->Size = System::Drawing::Size(100, 20);
+			this->RFID->Size = System::Drawing::Size(161, 20);
 			this->RFID->TabIndex = 10;
 			this->RFID->TextChanged += gcnew System::EventHandler(this, &MainForm::RFID_TextChanged);
 			// 
 			// comboBox1
 			// 
 			this->comboBox1->FormattingEnabled = true;
-			this->comboBox1->Location = System::Drawing::Point(6, 54);
+			this->comboBox1->Location = System::Drawing::Point(6, 52);
 			this->comboBox1->Name = L"comboBox1";
-			this->comboBox1->Size = System::Drawing::Size(121, 21);
+			this->comboBox1->Size = System::Drawing::Size(151, 21);
 			this->comboBox1->TabIndex = 11;
 			this->comboBox1->Text = L"COM Ports";
 			// 
@@ -525,14 +424,14 @@ private: System::ComponentModel::IContainer^  components;
 			// 
 			this->progressBar1->Location = System::Drawing::Point(6, 19);
 			this->progressBar1->Name = L"progressBar1";
-			this->progressBar1->Size = System::Drawing::Size(100, 23);
+			this->progressBar1->Size = System::Drawing::Size(151, 23);
 			this->progressBar1->TabIndex = 12;
 			// 
 			// btnOpen
 			// 
-			this->btnOpen->Location = System::Drawing::Point(6, 145);
+			this->btnOpen->Location = System::Drawing::Point(5, 112);
 			this->btnOpen->Name = L"btnOpen";
-			this->btnOpen->Size = System::Drawing::Size(75, 23);
+			this->btnOpen->Size = System::Drawing::Size(77, 23);
 			this->btnOpen->TabIndex = 13;
 			this->btnOpen->Text = L"Open Port";
 			this->btnOpen->UseVisualStyleBackColor = true;
@@ -540,63 +439,55 @@ private: System::ComponentModel::IContainer^  components;
 			// 
 			// grpPorts
 			// 
+			this->grpPorts->BackColor = System::Drawing::Color::Transparent;
 			this->grpPorts->Controls->Add(this->comboBox2);
 			this->grpPorts->Controls->Add(this->lblPortMsg);
 			this->grpPorts->Controls->Add(this->btnClosePort);
 			this->grpPorts->Controls->Add(this->progressBar1);
 			this->grpPorts->Controls->Add(this->comboBox1);
 			this->grpPorts->Controls->Add(this->btnOpen);
-			this->grpPorts->Location = System::Drawing::Point(427, 39);
+			this->grpPorts->FlatStyle = System::Windows::Forms::FlatStyle::Popup;
+			this->grpPorts->Location = System::Drawing::Point(7, 102);
 			this->grpPorts->Name = L"grpPorts";
-			this->grpPorts->Size = System::Drawing::Size(197, 203);
+			this->grpPorts->Size = System::Drawing::Size(169, 183);
 			this->grpPorts->TabIndex = 14;
 			this->grpPorts->TabStop = false;
-			this->grpPorts->Text = L"Port Status";
+			this->grpPorts->Text = L"COM Port Status";
 			// 
 			// comboBox2
 			// 
 			this->comboBox2->FormattingEnabled = true;
 			this->comboBox2->Items->AddRange(gcnew cli::array< System::Object^  >(3) {L"9600", L"38400", L"115200"});
-			this->comboBox2->Location = System::Drawing::Point(6, 95);
+			this->comboBox2->Location = System::Drawing::Point(6, 85);
 			this->comboBox2->Name = L"comboBox2";
-			this->comboBox2->Size = System::Drawing::Size(121, 21);
+			this->comboBox2->Size = System::Drawing::Size(151, 21);
 			this->comboBox2->TabIndex = 16;
 			this->comboBox2->Text = L"Baud rate";
 			// 
 			// lblPortMsg
 			// 
 			this->lblPortMsg->AutoSize = true;
-			this->lblPortMsg->Location = System::Drawing::Point(6, 172);
+			this->lblPortMsg->Location = System::Drawing::Point(11, 150);
 			this->lblPortMsg->Name = L"lblPortMsg";
 			this->lblPortMsg->Size = System::Drawing::Size(0, 13);
 			this->lblPortMsg->TabIndex = 15;
 			// 
 			// btnClosePort
 			// 
-			this->btnClosePort->Location = System::Drawing::Point(99, 145);
+			this->btnClosePort->Location = System::Drawing::Point(89, 112);
 			this->btnClosePort->Name = L"btnClosePort";
-			this->btnClosePort->Size = System::Drawing::Size(75, 23);
+			this->btnClosePort->Size = System::Drawing::Size(68, 23);
 			this->btnClosePort->TabIndex = 14;
 			this->btnClosePort->Text = L"Close Port";
 			this->btnClosePort->UseVisualStyleBackColor = true;
 			this->btnClosePort->Click += gcnew System::EventHandler(this, &MainForm::btnClosePort_Click);
 			// 
-			// btnTest
-			// 
-			this->btnTest->Location = System::Drawing::Point(358, 248);
-			this->btnTest->Name = L"btnTest";
-			this->btnTest->Size = System::Drawing::Size(75, 23);
-			this->btnTest->TabIndex = 15;
-			this->btnTest->Text = L"TEST";
-			this->btnTest->UseVisualStyleBackColor = true;
-			this->btnTest->Click += gcnew System::EventHandler(this, &MainForm::btnTest_Click);
-			// 
 			// groupBox1
 			// 
 			this->groupBox1->Controls->Add(this->lblDBConnection);
-			this->groupBox1->Location = System::Drawing::Point(17, 93);
+			this->groupBox1->Location = System::Drawing::Point(6, 55);
 			this->groupBox1->Name = L"groupBox1";
-			this->groupBox1->Size = System::Drawing::Size(348, 39);
+			this->groupBox1->Size = System::Drawing::Size(376, 39);
 			this->groupBox1->TabIndex = 16;
 			this->groupBox1->TabStop = false;
 			this->groupBox1->Text = L"Database Connection Status";
@@ -604,41 +495,60 @@ private: System::ComponentModel::IContainer^  components;
 			// lblDBConnection
 			// 
 			this->lblDBConnection->AutoSize = true;
+			this->lblDBConnection->ForeColor = System::Drawing::Color::ForestGreen;
 			this->lblDBConnection->Location = System::Drawing::Point(15, 17);
 			this->lblDBConnection->Name = L"lblDBConnection";
 			this->lblDBConnection->Size = System::Drawing::Size(0, 13);
 			this->lblDBConnection->TabIndex = 0;
 			// 
-			// textBox1
+			// groupBox2
 			// 
-			this->textBox1->Location = System::Drawing::Point(35, 269);
-			this->textBox1->Name = L"textBox1";
-			this->textBox1->Size = System::Drawing::Size(100, 20);
-			this->textBox1->TabIndex = 17;
+			this->groupBox2->Controls->Add(this->serverAddress_);
+			this->groupBox2->Controls->Add(label1);
+			this->groupBox2->Controls->Add(label2);
+			this->groupBox2->Controls->Add(this->userName_);
+			this->groupBox2->Controls->Add(label3);
+			this->groupBox2->Controls->Add(this->password_);
+			this->groupBox2->Location = System::Drawing::Point(5, 5);
+			this->groupBox2->Name = L"groupBox2";
+			this->groupBox2->Size = System::Drawing::Size(619, 44);
+			this->groupBox2->TabIndex = 18;
+			this->groupBox2->TabStop = false;
+			this->groupBox2->Text = L"Database";
+			// 
+			// groupBox3
+			// 
+			this->groupBox3->Controls->Add(this->resultsList_);
+			this->groupBox3->Location = System::Drawing::Point(388, 55);
+			this->groupBox3->Name = L"groupBox3";
+			this->groupBox3->Size = System::Drawing::Size(200, 143);
+			this->groupBox3->TabIndex = 19;
+			this->groupBox3->TabStop = false;
+			this->groupBox3->Text = L"Result";
+			// 
+			// groupBox4
+			// 
+			this->groupBox4->Controls->Add(this->RFID);
+			this->groupBox4->Location = System::Drawing::Point(186, 102);
+			this->groupBox4->Name = L"groupBox4";
+			this->groupBox4->Size = System::Drawing::Size(196, 57);
+			this->groupBox4->TabIndex = 20;
+			this->groupBox4->TabStop = false;
+			this->groupBox4->Text = L"RFID";
 			// 
 			// MainForm
 			// 
-			this->AcceptButton = this->connectButton_;
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->CancelButton = this->closeButton_;
 			this->ClientSize = System::Drawing::Size(781, 309);
 			this->ControlBox = false;
-			this->Controls->Add(this->textBox1);
+			this->Controls->Add(this->groupBox4);
+			this->Controls->Add(this->groupBox3);
+			this->Controls->Add(this->groupBox2);
 			this->Controls->Add(this->groupBox1);
-			this->Controls->Add(this->btnTest);
 			this->Controls->Add(this->grpPorts);
-			this->Controls->Add(this->RFID);
-			this->Controls->Add(label4);
-			this->Controls->Add(label3);
-			this->Controls->Add(label2);
-			this->Controls->Add(label1);
 			this->Controls->Add(this->closeButton_);
-			this->Controls->Add(this->connectButton_);
-			this->Controls->Add(this->resultsList_);
-			this->Controls->Add(this->userName_);
-			this->Controls->Add(this->password_);
-			this->Controls->Add(this->serverAddress_);
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedDialog;
 			this->MaximizeBox = false;
 			this->MinimizeBox = false;
@@ -649,8 +559,12 @@ private: System::ComponentModel::IContainer^  components;
 			this->grpPorts->PerformLayout();
 			this->groupBox1->ResumeLayout(false);
 			this->groupBox1->PerformLayout();
+			this->groupBox2->ResumeLayout(false);
+			this->groupBox2->PerformLayout();
+			this->groupBox3->ResumeLayout(false);
+			this->groupBox4->ResumeLayout(false);
+			this->groupBox4->PerformLayout();
 			this->ResumeLayout(false);
-			this->PerformLayout();
 
 		}
 #pragma endregion
@@ -709,19 +623,7 @@ private: System::Void btnClosePort_Click(System::Object^  sender, System::EventA
 		 }
 private: System::Void btnTest_Click(System::Object^  sender, System::EventArgs^  e) {
 			 lblDBConnection->Text = ""; 
-			/*
-			// add sender name
-                 String^ name = this->_serialPort->PortName;
-                 // grab text and store in send buffer
-                 String^ message = "TEST MESSAGE";
-                 // write to serial
-                 if(this->_serialPort->IsOpen){
-                    this->_serialPort->WriteLine(String::Format("<{0}>: {1}",name,message));
-					this->lblPortMsg->Text=String::Format("SENT <{0}>: {1}",this->_serialPort->PortName,message);
-				 }
-                 else
-                    this->lblPortMsg->Text="Port Not Opened";
-			*/
+			
 		 }
 };
 }
