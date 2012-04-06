@@ -30,10 +30,10 @@
 #include <algorithm>
 #include <string>
 #include <boost/algorithm/string.hpp>
-
+#include <newEntry1.h>
 
 namespace wforms {
-
+	using namespace FormNewEntry;
 	using namespace Microsoft::Win32;
 	using namespace System;
 	using namespace System::ComponentModel;
@@ -64,13 +64,6 @@ namespace wforms {
 			}
 		}
 
-	/* private: System::Void Data_Received(System::Object ^ sender, System::IO::Ports::SerialDataReceivedEventArgs ^e){
-        String ^text = this->_serialPort->ReadLine();
-        this->RFID->Text = text;
-       }*/
-	
-	
-
 	private:
 	System::Void DataReceivedHandler(System::Object^ sender,SerialDataReceivedEventArgs^ e)
     {
@@ -94,6 +87,7 @@ namespace wforms {
 
 	} 
 }
+		public:
 	// Insert a text string into the output list control
 		Void AddMessage(String^ msg)
 		{
@@ -121,6 +115,7 @@ namespace wforms {
 			// Clear out the results list, in case this isn't the first time
 			// we've come in here.
 			resultsList_->Items->Clear();
+			userLogs->Items->Clear();
 			lblDBConnection->Text = "";
 			mysqlpp::Connection con(false);
 			const int kInputBufSize = 100;
@@ -145,40 +140,51 @@ namespace wforms {
 				string str1(tmpRFID);
 				trim(str1);
 
-				//sprintf(buff, "SELECT * FROM login WHERE cardnum = '%s';", str1);
-				//std::string buffAsStdStr = buff;
-				//String^ temp = gcnew String(buffAsStdStr.c_str());
-				 
-				 
-				//textBox1->Text = temp;
-				//const char* myQuery = buffAsStdStr.c_str();
-
 				mysqlpp::Query query = con.query("SELECT * FROM login WHERE cardnum = %0q");				
 				query.parse();
-
-				//mysqlpp::SQLQueryParms sqp;
-				//sqp << tmpRFID;
 			
-				if (mysqlpp::StoreQueryResult res = query.store(str1)) {					
-					for (size_t i = 0; i < res.num_rows(); ++i) {
-							AddMessage("Firstname: " + ToUCS2(res[i]["firstname"]));
-							AddMessage("Lastname: " + ToUCS2(res[i]["lastname"]));
-							AddMessage("Last Access: " + ToUCS2(res[i]["lastlogin"]));
-							String^ isBanned = ToUCS2(res[i]["banned"]);
-							if(isBanned == "1"){
-								AddMessage("Banned : Yes");
-								ProcessAccess("Access Denied");
-							}
-							else {
-								AddMessage("Banned : No");
-								ProcessAccess("Access Granted");
-								mysqlpp::Query querytmp = con.query("UPDATE login SET lastlogin = NOW() WHERE cardnum = %0q");
-								querytmp.parse();
-								mysqlpp::StoreQueryResult res2 = querytmp.store(str1);
-							}
-
-
+				if (mysqlpp::StoreQueryResult res = query.store(str1)) {
+					size_t i = 0;
+					if(res.num_rows() == i){
+						AddMessage("No Entry Found");
 					}
+					else {
+						//SHOW USER LOGS
+						//userLogs
+						mysqlpp::Query querylogs = con.query("SELECT * FROM loginrecords WHERE cardnum = %0q ORDER BY `date` DESC");
+						querylogs.parse();
+						mysqlpp::StoreQueryResult getlogs = querylogs.store(str1);
+						for (size_t ctr = 0; ctr < getlogs.num_rows(); ++ctr) {
+							userLogs->Items->Add(ToUCS2(getlogs[ctr]["date"]));
+						}
+
+						//for (size_t i = 0; i < res.num_rows(); ++i) {
+						 AddMessage("Firstname: " + ToUCS2(res[i]["firstname"]));
+						AddMessage("Lastname: " + ToUCS2(res[i]["lastname"]));
+						AddMessage("Department: " + ToUCS2(res[i]["department"]));
+						AddMessage("Course: " + ToUCS2(res[i]["course"]));
+						AddMessage("Year Level: " + ToUCS2(res[i]["yearlevel"]));
+						AddMessage("Last Access: " + ToUCS2(res[i]["lastlogin"]));
+						String^ isBanned = ToUCS2(res[i]["banned"]);
+						if(isBanned == "1"){
+							AddMessage("Banned : Yes");
+							ProcessAccess("Access Denied");
+						}
+						else {
+							AddMessage("Banned : No");
+							ProcessAccess("Access Granted");
+							mysqlpp::Query querytmp = con.query("UPDATE login SET lastlogin = NOW() WHERE cardnum = %0q");
+							querytmp.parse();
+							mysqlpp::StoreQueryResult res2 = querytmp.store(str1);
+
+							//UPDATING RECORDS
+							querytmp.reset();
+							querytmp << "INSERT INTO loginrecords (`cardnum`,`date`) VALUES (%0q,NOW())";
+							querytmp.parse();
+							res2 = querytmp.store(str1);
+						}
+					}
+					//}
 					SaveInputs();
 				}
 				else {
@@ -266,9 +272,9 @@ namespace wforms {
 	private: System::Windows::Forms::TextBox^ serverAddress_;
 	private: System::Windows::Forms::TextBox^ password_;
 	private: System::Windows::Forms::TextBox^ userName_;
-	private: System::Windows::Forms::ListBox^ resultsList_;
 
-	private: System::Windows::Forms::Button^ closeButton_;
+
+
 	private: System::Windows::Forms::TextBox^  RFID;
 	private: System::Windows::Forms::ComboBox^  comboBox1;
 	private: System::Windows::Forms::ProgressBar^  progressBar1;
@@ -283,9 +289,22 @@ namespace wforms {
 	private: System::Windows::Forms::Label^  lblDBConnection;
 
 	private: System::Windows::Forms::GroupBox^  groupBox2;
-	private: System::Windows::Forms::GroupBox^  groupBox3;
+
 private: System::Windows::Forms::GroupBox^  groupBox4;
-private: System::Windows::Forms::DataGridView^  dataGridView1;
+private: System::Windows::Forms::TabControl^  tabControl1;
+private: System::Windows::Forms::TabPage^  tabResult;
+private: System::Windows::Forms::TabPage^  tabLogs;
+private: System::Windows::Forms::ListBox^  userLogs;
+private: System::Windows::Forms::ListBox^  resultsList_;
+private: System::Windows::Forms::Label^  label4;
+private: System::Windows::Forms::MenuStrip^  menuStrip1;
+private: System::Windows::Forms::ToolStripMenuItem^  fileToolStripMenuItem;
+private: System::Windows::Forms::ToolStripMenuItem^  exitToolStripMenuItem;
+private: System::Windows::Forms::ToolStripMenuItem^  newEntryToolStripMenuItem;
+
+
+
+
 
 
 
@@ -309,8 +328,6 @@ private: System::ComponentModel::IContainer^  components;
 			this->serverAddress_ = (gcnew System::Windows::Forms::TextBox());
 			this->password_ = (gcnew System::Windows::Forms::TextBox());
 			this->userName_ = (gcnew System::Windows::Forms::TextBox());
-			this->resultsList_ = (gcnew System::Windows::Forms::ListBox());
-			this->closeButton_ = (gcnew System::Windows::Forms::Button());
 			this->RFID = (gcnew System::Windows::Forms::TextBox());
 			this->comboBox1 = (gcnew System::Windows::Forms::ComboBox());
 			this->progressBar1 = (gcnew System::Windows::Forms::ProgressBar());
@@ -323,18 +340,28 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox1 = (gcnew System::Windows::Forms::GroupBox());
 			this->lblDBConnection = (gcnew System::Windows::Forms::Label());
 			this->groupBox2 = (gcnew System::Windows::Forms::GroupBox());
-			this->groupBox3 = (gcnew System::Windows::Forms::GroupBox());
 			this->groupBox4 = (gcnew System::Windows::Forms::GroupBox());
-			this->dataGridView1 = (gcnew System::Windows::Forms::DataGridView());
+			this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
+			this->tabResult = (gcnew System::Windows::Forms::TabPage());
+			this->resultsList_ = (gcnew System::Windows::Forms::ListBox());
+			this->tabLogs = (gcnew System::Windows::Forms::TabPage());
+			this->label4 = (gcnew System::Windows::Forms::Label());
+			this->userLogs = (gcnew System::Windows::Forms::ListBox());
+			this->menuStrip1 = (gcnew System::Windows::Forms::MenuStrip());
+			this->fileToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->newEntryToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->exitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			label1 = (gcnew System::Windows::Forms::Label());
 			label2 = (gcnew System::Windows::Forms::Label());
 			label3 = (gcnew System::Windows::Forms::Label());
 			this->grpPorts->SuspendLayout();
 			this->groupBox1->SuspendLayout();
 			this->groupBox2->SuspendLayout();
-			this->groupBox3->SuspendLayout();
 			this->groupBox4->SuspendLayout();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->dataGridView1))->BeginInit();
+			this->tabControl1->SuspendLayout();
+			this->tabResult->SuspendLayout();
+			this->tabLogs->SuspendLayout();
+			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// label1
@@ -389,27 +416,6 @@ private: System::ComponentModel::IContainer^  components;
 			this->userName_->Size = System::Drawing::Size(139, 20);
 			this->userName_->TabIndex = 1;
 			// 
-			// resultsList_
-			// 
-			this->resultsList_->Enabled = false;
-			this->resultsList_->FormattingEnabled = true;
-			this->resultsList_->Location = System::Drawing::Point(5, 15);
-			this->resultsList_->Name = L"resultsList_";
-			this->resultsList_->Size = System::Drawing::Size(188, 121);
-			this->resultsList_->TabIndex = 3;
-			this->resultsList_->TabStop = false;
-			// 
-			// closeButton_
-			// 
-			this->closeButton_->DialogResult = System::Windows::Forms::DialogResult::Cancel;
-			this->closeButton_->Location = System::Drawing::Point(694, 5);
-			this->closeButton_->Name = L"closeButton_";
-			this->closeButton_->Size = System::Drawing::Size(75, 23);
-			this->closeButton_->TabIndex = 4;
-			this->closeButton_->Text = L"Exit";
-			this->closeButton_->UseVisualStyleBackColor = true;
-			this->closeButton_->Click += gcnew System::EventHandler(this, &MainForm::CloseButton_Click);
-			// 
 			// RFID
 			// 
 			this->RFID->Location = System::Drawing::Point(17, 19);
@@ -454,7 +460,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->grpPorts->Controls->Add(this->comboBox1);
 			this->grpPorts->Controls->Add(this->btnOpen);
 			this->grpPorts->FlatStyle = System::Windows::Forms::FlatStyle::Popup;
-			this->grpPorts->Location = System::Drawing::Point(7, 102);
+			this->grpPorts->Location = System::Drawing::Point(4, 125);
 			this->grpPorts->Name = L"grpPorts";
 			this->grpPorts->Size = System::Drawing::Size(169, 183);
 			this->grpPorts->TabIndex = 14;
@@ -492,7 +498,7 @@ private: System::ComponentModel::IContainer^  components;
 			// groupBox1
 			// 
 			this->groupBox1->Controls->Add(this->lblDBConnection);
-			this->groupBox1->Location = System::Drawing::Point(6, 55);
+			this->groupBox1->Location = System::Drawing::Point(3, 78);
 			this->groupBox1->Name = L"groupBox1";
 			this->groupBox1->Size = System::Drawing::Size(376, 39);
 			this->groupBox1->TabIndex = 16;
@@ -516,55 +522,127 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox2->Controls->Add(this->userName_);
 			this->groupBox2->Controls->Add(label3);
 			this->groupBox2->Controls->Add(this->password_);
-			this->groupBox2->Location = System::Drawing::Point(5, 5);
+			this->groupBox2->Location = System::Drawing::Point(2, 28);
 			this->groupBox2->Name = L"groupBox2";
 			this->groupBox2->Size = System::Drawing::Size(619, 44);
 			this->groupBox2->TabIndex = 18;
 			this->groupBox2->TabStop = false;
 			this->groupBox2->Text = L"Database";
 			// 
-			// groupBox3
-			// 
-			this->groupBox3->Controls->Add(this->resultsList_);
-			this->groupBox3->Location = System::Drawing::Point(388, 55);
-			this->groupBox3->Name = L"groupBox3";
-			this->groupBox3->Size = System::Drawing::Size(200, 143);
-			this->groupBox3->TabIndex = 19;
-			this->groupBox3->TabStop = false;
-			this->groupBox3->Text = L"Result";
-			// 
 			// groupBox4
 			// 
 			this->groupBox4->Controls->Add(this->RFID);
-			this->groupBox4->Location = System::Drawing::Point(186, 102);
+			this->groupBox4->Location = System::Drawing::Point(183, 125);
 			this->groupBox4->Name = L"groupBox4";
 			this->groupBox4->Size = System::Drawing::Size(196, 57);
 			this->groupBox4->TabIndex = 20;
 			this->groupBox4->TabStop = false;
 			this->groupBox4->Text = L"RFID";
 			// 
-			// dataGridView1
+			// tabControl1
 			// 
-			this->dataGridView1->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
-			this->dataGridView1->Location = System::Drawing::Point(182, 204);
-			this->dataGridView1->Name = L"dataGridView1";
-			this->dataGridView1->Size = System::Drawing::Size(495, 88);
-			this->dataGridView1->TabIndex = 21;
+			this->tabControl1->Controls->Add(this->tabResult);
+			this->tabControl1->Controls->Add(this->tabLogs);
+			this->tabControl1->Location = System::Drawing::Point(385, 78);
+			this->tabControl1->Name = L"tabControl1";
+			this->tabControl1->SelectedIndex = 0;
+			this->tabControl1->Size = System::Drawing::Size(247, 230);
+			this->tabControl1->TabIndex = 21;
+			// 
+			// tabResult
+			// 
+			this->tabResult->Controls->Add(this->resultsList_);
+			this->tabResult->Location = System::Drawing::Point(4, 22);
+			this->tabResult->Name = L"tabResult";
+			this->tabResult->Padding = System::Windows::Forms::Padding(3);
+			this->tabResult->Size = System::Drawing::Size(239, 204);
+			this->tabResult->TabIndex = 0;
+			this->tabResult->Text = L"Result";
+			this->tabResult->UseVisualStyleBackColor = true;
+			// 
+			// resultsList_
+			// 
+			this->resultsList_->BorderStyle = System::Windows::Forms::BorderStyle::None;
+			this->resultsList_->FormattingEnabled = true;
+			this->resultsList_->Location = System::Drawing::Point(6, 6);
+			this->resultsList_->Name = L"resultsList_";
+			this->resultsList_->Size = System::Drawing::Size(226, 195);
+			this->resultsList_->TabIndex = 22;
+			// 
+			// tabLogs
+			// 
+			this->tabLogs->Controls->Add(this->label4);
+			this->tabLogs->Controls->Add(this->userLogs);
+			this->tabLogs->Location = System::Drawing::Point(4, 22);
+			this->tabLogs->Name = L"tabLogs";
+			this->tabLogs->Padding = System::Windows::Forms::Padding(3);
+			this->tabLogs->Size = System::Drawing::Size(239, 204);
+			this->tabLogs->TabIndex = 1;
+			this->tabLogs->Text = L"Logs";
+			this->tabLogs->UseVisualStyleBackColor = true;
+			// 
+			// label4
+			// 
+			this->label4->AutoSize = true;
+			this->label4->Font = (gcnew System::Drawing::Font(L"Arial", 8.25F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point, 
+				static_cast<System::Byte>(0)));
+			this->label4->Location = System::Drawing::Point(3, 5);
+			this->label4->Name = L"label4";
+			this->label4->Size = System::Drawing::Size(96, 14);
+			this->label4->TabIndex = 1;
+			this->label4->Text = L"Dates Logged In";
+			// 
+			// userLogs
+			// 
+			this->userLogs->FormattingEnabled = true;
+			this->userLogs->Location = System::Drawing::Point(5, 25);
+			this->userLogs->Name = L"userLogs";
+			this->userLogs->Size = System::Drawing::Size(226, 147);
+			this->userLogs->TabIndex = 0;
+			// 
+			// menuStrip1
+			// 
+			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) {this->fileToolStripMenuItem});
+			this->menuStrip1->Location = System::Drawing::Point(0, 0);
+			this->menuStrip1->Name = L"menuStrip1";
+			this->menuStrip1->Size = System::Drawing::Size(826, 24);
+			this->menuStrip1->TabIndex = 22;
+			this->menuStrip1->Text = L"menuStrip1";
+			// 
+			// fileToolStripMenuItem
+			// 
+			this->fileToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->newEntryToolStripMenuItem, 
+				this->exitToolStripMenuItem});
+			this->fileToolStripMenuItem->Name = L"fileToolStripMenuItem";
+			this->fileToolStripMenuItem->Size = System::Drawing::Size(37, 20);
+			this->fileToolStripMenuItem->Text = L"File";
+			// 
+			// newEntryToolStripMenuItem
+			// 
+			this->newEntryToolStripMenuItem->Name = L"newEntryToolStripMenuItem";
+			this->newEntryToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->newEntryToolStripMenuItem->Text = L"New Entry";
+			this->newEntryToolStripMenuItem->Click += gcnew System::EventHandler(this, &MainForm::newEntryToolStripMenuItem_Click);
+			// 
+			// exitToolStripMenuItem
+			// 
+			this->exitToolStripMenuItem->Name = L"exitToolStripMenuItem";
+			this->exitToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->exitToolStripMenuItem->Text = L"Exit";
+			this->exitToolStripMenuItem->Click += gcnew System::EventHandler(this, &MainForm::exitToolStripMenuItem_Click);
 			// 
 			// MainForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->CancelButton = this->closeButton_;
-			this->ClientSize = System::Drawing::Size(781, 309);
+			this->ClientSize = System::Drawing::Size(826, 473);
 			this->ControlBox = false;
-			this->Controls->Add(this->dataGridView1);
+			this->Controls->Add(this->tabControl1);
 			this->Controls->Add(this->groupBox4);
-			this->Controls->Add(this->groupBox3);
 			this->Controls->Add(this->groupBox2);
 			this->Controls->Add(this->groupBox1);
 			this->Controls->Add(this->grpPorts);
-			this->Controls->Add(this->closeButton_);
+			this->Controls->Add(this->menuStrip1);
 			this->FormBorderStyle = System::Windows::Forms::FormBorderStyle::FixedDialog;
 			this->MaximizeBox = false;
 			this->MinimizeBox = false;
@@ -577,11 +655,16 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox1->PerformLayout();
 			this->groupBox2->ResumeLayout(false);
 			this->groupBox2->PerformLayout();
-			this->groupBox3->ResumeLayout(false);
 			this->groupBox4->ResumeLayout(false);
 			this->groupBox4->PerformLayout();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->dataGridView1))->EndInit();
+			this->tabControl1->ResumeLayout(false);
+			this->tabResult->ResumeLayout(false);
+			this->tabLogs->ResumeLayout(false);
+			this->tabLogs->PerformLayout();
+			this->menuStrip1->ResumeLayout(false);
+			this->menuStrip1->PerformLayout();
 			this->ResumeLayout(false);
+			this->PerformLayout();
 
 		}
 #pragma endregion
@@ -641,6 +724,21 @@ private: System::Void btnClosePort_Click(System::Object^  sender, System::EventA
 private: System::Void btnTest_Click(System::Object^  sender, System::EventArgs^  e) {
 			 lblDBConnection->Text = ""; 
 			
+		 }
+private: System::Void exitToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+			 Application::Exit();
+		 }
+private: System::Void newEntryToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
+			//newEntry1 myForm;
+
+			// MainForm::Hide();
+			FormNewEntry::newEntry^ form = gcnew FormNewEntry::newEntry();
+			form->Show();
+			 Show();
+			//FormNewEntry::newEntry
+			/*if(myForm.ShowDialog() == System::Windows::Forms::DialogResult::OK){
+				//Do stuff
+			}*/
 		 }
 };
 }

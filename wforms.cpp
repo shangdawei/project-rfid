@@ -3,6 +3,7 @@
 #include "MainForm.h"
 
 using namespace wforms;
+using namespace FormNewEntry;
 
 [STAThreadAttribute]
 int main(array<System::String ^> ^args)
