@@ -159,26 +159,30 @@ namespace wforms {
 				//mysqlpp::SQLQueryParms sqp;
 				//sqp << tmpRFID;
 			
-				if (mysqlpp::StoreQueryResult res = query.store(str1)) {					
-					for (size_t i = 0; i < res.num_rows(); ++i) {
-							AddMessage("Firstname: " + ToUCS2(res[i]["firstname"]));
-							AddMessage("Lastname: " + ToUCS2(res[i]["lastname"]));
-							AddMessage("Last Access: " + ToUCS2(res[i]["lastlogin"]));
-							String^ isBanned = ToUCS2(res[i]["banned"]);
-							if(isBanned == "1"){
-								AddMessage("Banned : Yes");
-								ProcessAccess("Access Denied");
-							}
-							else {
-								AddMessage("Banned : No");
-								ProcessAccess("Access Granted");
-								mysqlpp::Query querytmp = con.query("UPDATE login SET lastlogin = NOW() WHERE cardnum = %0q");
-								querytmp.parse();
-								mysqlpp::StoreQueryResult res2 = querytmp.store(str1);
-							}
-
-
+				if (mysqlpp::StoreQueryResult res = query.store(str1)) {
+					size_t i = 0;
+					if(res.num_rows() == i){
+						AddMessage("No Entry Found");
 					}
+					else {
+						//for (size_t i = 0; i < res.num_rows(); ++i) {
+						AddMessage("Firstname: " + ToUCS2(res[i]["firstname"]));
+						AddMessage("Lastname: " + ToUCS2(res[i]["lastname"]));
+						AddMessage("Last Access: " + ToUCS2(res[i]["lastlogin"]));
+						String^ isBanned = ToUCS2(res[i]["banned"]);
+						if(isBanned == "1"){
+							AddMessage("Banned : Yes");
+							ProcessAccess("Access Denied");
+						}
+						else {
+							AddMessage("Banned : No");
+							ProcessAccess("Access Granted");
+							mysqlpp::Query querytmp = con.query("UPDATE login SET lastlogin = NOW() WHERE cardnum = %0q");
+							querytmp.parse();
+							mysqlpp::StoreQueryResult res2 = querytmp.store(str1);
+						}
+					}
+					//}
 					SaveInputs();
 				}
 				else {
