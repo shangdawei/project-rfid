@@ -167,12 +167,14 @@ namespace wforms {
 							String^ isBanned = ToUCS2(res[i]["banned"]);
 							if(isBanned == "1"){
 								AddMessage("Banned : Yes");
-
 								ProcessAccess("Access Denied");
 							}
 							else {
 								AddMessage("Banned : No");
 								ProcessAccess("Access Granted");
+								mysqlpp::Query querytmp = con.query("UPDATE login SET lastlogin = NOW() WHERE cardnum = %0q");
+								querytmp.parse();
+								mysqlpp::StoreQueryResult res2 = querytmp.store(str1);
 							}
 
 
@@ -283,6 +285,9 @@ namespace wforms {
 	private: System::Windows::Forms::GroupBox^  groupBox2;
 	private: System::Windows::Forms::GroupBox^  groupBox3;
 private: System::Windows::Forms::GroupBox^  groupBox4;
+private: System::Windows::Forms::DataGridView^  dataGridView1;
+
+
 
 
 
@@ -320,6 +325,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox2 = (gcnew System::Windows::Forms::GroupBox());
 			this->groupBox3 = (gcnew System::Windows::Forms::GroupBox());
 			this->groupBox4 = (gcnew System::Windows::Forms::GroupBox());
+			this->dataGridView1 = (gcnew System::Windows::Forms::DataGridView());
 			label1 = (gcnew System::Windows::Forms::Label());
 			label2 = (gcnew System::Windows::Forms::Label());
 			label3 = (gcnew System::Windows::Forms::Label());
@@ -328,6 +334,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox2->SuspendLayout();
 			this->groupBox3->SuspendLayout();
 			this->groupBox4->SuspendLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->dataGridView1))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// label1
@@ -536,6 +543,14 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox4->TabStop = false;
 			this->groupBox4->Text = L"RFID";
 			// 
+			// dataGridView1
+			// 
+			this->dataGridView1->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
+			this->dataGridView1->Location = System::Drawing::Point(182, 204);
+			this->dataGridView1->Name = L"dataGridView1";
+			this->dataGridView1->Size = System::Drawing::Size(495, 88);
+			this->dataGridView1->TabIndex = 21;
+			// 
 			// MainForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
@@ -543,6 +558,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->CancelButton = this->closeButton_;
 			this->ClientSize = System::Drawing::Size(781, 309);
 			this->ControlBox = false;
+			this->Controls->Add(this->dataGridView1);
 			this->Controls->Add(this->groupBox4);
 			this->Controls->Add(this->groupBox3);
 			this->Controls->Add(this->groupBox2);
@@ -564,6 +580,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox3->ResumeLayout(false);
 			this->groupBox4->ResumeLayout(false);
 			this->groupBox4->PerformLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->dataGridView1))->EndInit();
 			this->ResumeLayout(false);
 
 		}
