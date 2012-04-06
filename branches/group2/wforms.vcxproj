@@ -49,7 +49,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>boost_1_49_0;include;..\..\..\lib;C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\MYSQL++ Project Boboy\examples\vstudio\wforms;boost_1_49_0;include;..\..\..\lib;C:\Users\JETH-RO\Desktop\mysql++-3.1.0\examples\vstudio\wforms\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -117,10 +117,15 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="newEntry1.cpp" />
     <ClCompile Include="wforms.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainForm.h">
+      <FileType>CppForm</FileType>
+    </ClInclude>
+    <ClInclude Include="myHeader.h" />
+    <ClInclude Include="newEntry1.h">
       <FileType>CppForm</FileType>
     </ClInclude>
     <ClInclude Include="resource.h" />
@@ -129,6 +134,9 @@
     <EmbeddedResource Include="MainForm.resX">
       <DependentUpon>MainForm.h</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="newEntry1.resx">
+      <DependentUpon>newEntry1.h</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
