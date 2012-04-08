@@ -76,6 +76,7 @@ namespace wforms {
 		else {
 			try {
 				System::String^ indata = this->_serialPort->ReadLine();
+				this->RFID->Text = "";
 				this->RFID->Text = indata;
 			
 			}
@@ -250,7 +251,7 @@ namespace wforms {
 							res2 = querytmp.store(str1);
 						}
 						GetCurrentSheet();
-						RFID->Text = "";
+						
 					}
 					//}
 					SaveInputs();
