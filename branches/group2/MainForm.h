@@ -250,6 +250,7 @@ namespace wforms {
 							res2 = querytmp.store(str1);
 						}
 						GetCurrentSheet();
+						RFID->Text = "";
 					}
 					//}
 					SaveInputs();
