@@ -52,7 +52,6 @@ namespace wforms {
 		{
 			InitializeComponent();
 			LoadDefaults();
-
 			findPorts();
 		}
 
@@ -65,29 +64,67 @@ namespace wforms {
 		}
 
 	private:
-	System::Void DataReceivedHandler(System::Object^ sender,SerialDataReceivedEventArgs^ e)
-    {
+	System::Void DataReceivedHandler(System::Object^ sender,SerialDataReceivedEventArgs^ e){
 		this->lblPortMsg->Text = "";
-
-	if (RFID->InvokeRequired){
-		RFID->Invoke(
-			gcnew System::IO::Ports::SerialDataReceivedEventHandler(this,&wforms::MainForm::DataReceivedHandler),
-			gcnew array<System::Object^> { sender, e }
-		);
+		if (RFID->InvokeRequired){
+			RFID->Invoke(
+				gcnew System::IO::Ports::SerialDataReceivedEventHandler(this,&wforms::MainForm::DataReceivedHandler),
+				gcnew array<System::Object^> { sender, e }
+			);
 		
-	}
-	else {
-		try {
-			System::String^ indata = this->_serialPort->ReadLine();
-			this->RFID->Text = indata;
 		}
-		catch (TimeoutException ^) {
-			this->lblPortMsg->Text = "TIMEOUT";
+		else {
+			try {
+				System::String^ indata = this->_serialPort->ReadLine();
+				this->RFID->Text = indata;
+			
+			}
+			catch (TimeoutException ^) {
+				this->lblPortMsg->Text = "TIMEOUT";
+			}
+
+		} 
+	}
+		public:
+		Void GetCurrentSheet(){
+			this->dataGridView1->Rows->Clear();
+
+			mysqlpp::Connection con(false);
+			const int kInputBufSize = 100;
+			char acServerAddress[kInputBufSize];
+			char acUserName[kInputBufSize];
+			char acPassword[kInputBufSize];
+			char tmpRFID[kInputBufSize];
+			ToUTF8(acServerAddress, kInputBufSize, serverAddress_->Text);
+			ToUTF8(acUserName, kInputBufSize, userName_->Text);
+			ToUTF8(acPassword, kInputBufSize, password_->Text);
+			ToUTF8(tmpRFID, kInputBufSize, RFID->Text);
+
+			string str1(tmpRFID);
+				trim(str1);
+
+				//CONNECT TO THE DATABASE
+			if (!con.connect("test", acServerAddress, acUserName, acPassword)) {
+				lblDBConnection->Text = gcnew String(con.error());
+				return;
+			}
+
+			if(con.connected()){
+				//SHOW CURRENT SHEET
+				mysqlpp::Query query = con.query("SELECT * FROM loginsheet WHERE `in` REGEXP CURDATE()");
+				mysqlpp::StoreQueryResult res = query.store();
+				size_t i = 0;
+				for (size_t ctr = 0; ctr < res.num_rows(); ++ctr) {
+					mysqlpp::Query query2 = con.query("SELECT * FROM login WHERE `cardnum` = %0q");
+					query2.parse();
+					mysqlpp::StoreQueryResult res2 = query2.store(res[ctr]["cardnum"]);
+					this->dataGridView1->Rows->Add(ToUCS2(res[ctr]["cardnum"]),ToUCS2(res[ctr]["in"]),ToUCS2(res[ctr]["out"]),ToUCS2(res2[i]["firstname"]),ToUCS2(res2[i]["lastname"]),ToUCS2(res2[i]["department"]),ToUCS2(res2[i]["course"]),ToUCS2(res2[i]["yearlevel"]));
+					//this->dataGridView1->Rows->Add(ToUCS2(res[ctr]["cardnum"]),ToUCS2(res[ctr]["in"]),ToUCS2(res[ctr]["out"]),res2.num_rows());
+				}
+			}
 		}
 
-	} 
-}
-		public:
+
 	// Insert a text string into the output list control
 		Void AddMessage(String^ msg)
 		{
@@ -95,12 +132,14 @@ namespace wforms {
 		}
 
 		Void ProcessAccess(String^ access){
-			if(access == "Access Granted"){
-				this->_serialPort->WriteLine("1");
-			}
-			else {
-				// DO NOTIFY ADMIN
-				this->_serialPort->WriteLine("0");
+			if(this->_serialPort->IsOpen){
+				if(access == "Access Granted"){
+					this->_serialPort->WriteLine("1");
+				}
+				else {
+					
+					this->_serialPort->WriteLine("0");
+				}
 			}
 		}
 
@@ -150,7 +189,6 @@ namespace wforms {
 					}
 					else {
 						//SHOW USER LOGS
-						//userLogs
 						mysqlpp::Query querylogs = con.query("SELECT * FROM loginrecords WHERE cardnum = %0q ORDER BY `date` DESC");
 						querylogs.parse();
 						mysqlpp::StoreQueryResult getlogs = querylogs.store(str1);
@@ -158,8 +196,14 @@ namespace wforms {
 							userLogs->Items->Add(ToUCS2(getlogs[ctr]["date"]));
 						}
 
+						
+
+
 						//for (size_t i = 0; i < res.num_rows(); ++i) {
-						 AddMessage("Firstname: " + ToUCS2(res[i]["firstname"]));
+
+						//this->dataGridView1->Rows->Add(ToUCS2(res[i]["cardnum"]),ToUCS2(res[i]["firstname"]),ToUCS2(res[i]["lastname"]),ToUCS2(res[i]["department"]),ToUCS2(res[i]["course"]),ToUCS2(res[i]["yearlevel"]));
+						
+						AddMessage("Firstname: " + ToUCS2(res[i]["firstname"]));
 						AddMessage("Lastname: " + ToUCS2(res[i]["lastname"]));
 						AddMessage("Department: " + ToUCS2(res[i]["department"]));
 						AddMessage("Course: " + ToUCS2(res[i]["course"]));
@@ -171,11 +215,33 @@ namespace wforms {
 							ProcessAccess("Access Denied");
 						}
 						else {
-							AddMessage("Banned : No");
-							ProcessAccess("Access Granted");
-							mysqlpp::Query querytmp = con.query("UPDATE login SET lastlogin = NOW() WHERE cardnum = %0q");
+							//CHECK USER'S CURRENT DATE LOGS
+							mysqlpp::Query querytmp = con.query("SELECT * FROM loginsheet WHERE `in` REGEXP CURDATE() AND cardnum = %0q AND `out` IS NULL");
 							querytmp.parse();
 							mysqlpp::StoreQueryResult res2 = querytmp.store(str1);
+
+							//IF NOT LOGGED IN
+							if(res2.num_rows() == i){
+								querytmp.reset();
+								querytmp << "INSERT INTO loginsheet (cardnum,`in`,`out`) VALUES (%0q,NOW(),NULL)";
+								querytmp.parse();
+								res2 = querytmp.store(str1);
+							}
+							else {
+							//IF LOGGED IN, UPDATE LOGOUT COLUMN
+								querytmp.reset();
+								querytmp << "UPDATE loginsheet SET `out` = NOW() WHERE id = %0q";
+								querytmp.parse();
+								res2 = querytmp.store(res2[i]["id"]);
+							}
+
+							AddMessage("Banned : No");
+							ProcessAccess("Access Granted");
+
+							querytmp.reset();
+							querytmp << "UPDATE login SET lastlogin = NOW() WHERE cardnum = %0q";
+							querytmp.parse();
+							res2 = querytmp.store(str1);
 
 							//UPDATING RECORDS
 							querytmp.reset();
@@ -183,6 +249,7 @@ namespace wforms {
 							querytmp.parse();
 							res2 = querytmp.store(str1);
 						}
+						GetCurrentSheet();
 					}
 					//}
 					SaveInputs();
@@ -301,6 +368,33 @@ private: System::Windows::Forms::MenuStrip^  menuStrip1;
 private: System::Windows::Forms::ToolStripMenuItem^  fileToolStripMenuItem;
 private: System::Windows::Forms::ToolStripMenuItem^  exitToolStripMenuItem;
 private: System::Windows::Forms::ToolStripMenuItem^  newEntryToolStripMenuItem;
+private: System::Windows::Forms::DataGridView^  dataGridView1;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  CardNum;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  LOGIN;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  LOGOUT;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  FirstName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  LastName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  Department;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  Course;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  Year;
+private: System::Windows::Forms::Button^  button1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -351,6 +445,16 @@ private: System::ComponentModel::IContainer^  components;
 			this->fileToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->newEntryToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->exitToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->dataGridView1 = (gcnew System::Windows::Forms::DataGridView());
+			this->CardNum = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->LOGIN = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->LOGOUT = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->FirstName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->LastName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->Department = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->Course = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->Year = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->button1 = (gcnew System::Windows::Forms::Button());
 			label1 = (gcnew System::Windows::Forms::Label());
 			label2 = (gcnew System::Windows::Forms::Label());
 			label3 = (gcnew System::Windows::Forms::Label());
@@ -362,6 +466,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->tabResult->SuspendLayout();
 			this->tabLogs->SuspendLayout();
 			this->menuStrip1->SuspendLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->dataGridView1))->BeginInit();
 			this->SuspendLayout();
 			// 
 			// label1
@@ -500,7 +605,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->groupBox1->Controls->Add(this->lblDBConnection);
 			this->groupBox1->Location = System::Drawing::Point(3, 78);
 			this->groupBox1->Name = L"groupBox1";
-			this->groupBox1->Size = System::Drawing::Size(376, 39);
+			this->groupBox1->Size = System::Drawing::Size(782, 39);
 			this->groupBox1->TabIndex = 16;
 			this->groupBox1->TabStop = false;
 			this->groupBox1->Text = L"Database Connection Status";
@@ -543,10 +648,10 @@ private: System::ComponentModel::IContainer^  components;
 			// 
 			this->tabControl1->Controls->Add(this->tabResult);
 			this->tabControl1->Controls->Add(this->tabLogs);
-			this->tabControl1->Location = System::Drawing::Point(385, 78);
+			this->tabControl1->Location = System::Drawing::Point(385, 125);
 			this->tabControl1->Name = L"tabControl1";
 			this->tabControl1->SelectedIndex = 0;
-			this->tabControl1->Size = System::Drawing::Size(247, 230);
+			this->tabControl1->Size = System::Drawing::Size(247, 153);
 			this->tabControl1->TabIndex = 21;
 			// 
 			// tabResult
@@ -555,7 +660,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->tabResult->Location = System::Drawing::Point(4, 22);
 			this->tabResult->Name = L"tabResult";
 			this->tabResult->Padding = System::Windows::Forms::Padding(3);
-			this->tabResult->Size = System::Drawing::Size(239, 204);
+			this->tabResult->Size = System::Drawing::Size(239, 127);
 			this->tabResult->TabIndex = 0;
 			this->tabResult->Text = L"Result";
 			this->tabResult->UseVisualStyleBackColor = true;
@@ -566,7 +671,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->resultsList_->FormattingEnabled = true;
 			this->resultsList_->Location = System::Drawing::Point(6, 6);
 			this->resultsList_->Name = L"resultsList_";
-			this->resultsList_->Size = System::Drawing::Size(226, 195);
+			this->resultsList_->Size = System::Drawing::Size(226, 117);
 			this->resultsList_->TabIndex = 22;
 			// 
 			// tabLogs
@@ -576,7 +681,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->tabLogs->Location = System::Drawing::Point(4, 22);
 			this->tabLogs->Name = L"tabLogs";
 			this->tabLogs->Padding = System::Windows::Forms::Padding(3);
-			this->tabLogs->Size = System::Drawing::Size(239, 204);
+			this->tabLogs->Size = System::Drawing::Size(239, 127);
 			this->tabLogs->TabIndex = 1;
 			this->tabLogs->Text = L"Logs";
 			this->tabLogs->UseVisualStyleBackColor = true;
@@ -597,7 +702,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->userLogs->FormattingEnabled = true;
 			this->userLogs->Location = System::Drawing::Point(5, 25);
 			this->userLogs->Name = L"userLogs";
-			this->userLogs->Size = System::Drawing::Size(226, 147);
+			this->userLogs->Size = System::Drawing::Size(226, 95);
 			this->userLogs->TabIndex = 0;
 			// 
 			// menuStrip1
@@ -620,23 +725,93 @@ private: System::ComponentModel::IContainer^  components;
 			// newEntryToolStripMenuItem
 			// 
 			this->newEntryToolStripMenuItem->Name = L"newEntryToolStripMenuItem";
-			this->newEntryToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->newEntryToolStripMenuItem->Size = System::Drawing::Size(128, 22);
 			this->newEntryToolStripMenuItem->Text = L"New Entry";
 			this->newEntryToolStripMenuItem->Click += gcnew System::EventHandler(this, &MainForm::newEntryToolStripMenuItem_Click);
 			// 
 			// exitToolStripMenuItem
 			// 
 			this->exitToolStripMenuItem->Name = L"exitToolStripMenuItem";
-			this->exitToolStripMenuItem->Size = System::Drawing::Size(152, 22);
+			this->exitToolStripMenuItem->Size = System::Drawing::Size(128, 22);
 			this->exitToolStripMenuItem->Text = L"Exit";
 			this->exitToolStripMenuItem->Click += gcnew System::EventHandler(this, &MainForm::exitToolStripMenuItem_Click);
+			// 
+			// dataGridView1
+			// 
+			this->dataGridView1->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
+			this->dataGridView1->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(8) {this->CardNum, 
+				this->LOGIN, this->LOGOUT, this->FirstName, this->LastName, this->Department, this->Course, this->Year});
+			this->dataGridView1->Location = System::Drawing::Point(3, 351);
+			this->dataGridView1->Name = L"dataGridView1";
+			this->dataGridView1->Size = System::Drawing::Size(818, 169);
+			this->dataGridView1->TabIndex = 23;
+			// 
+			// CardNum
+			// 
+			this->CardNum->HeaderText = L"CardNum";
+			this->CardNum->Name = L"CardNum";
+			this->CardNum->ReadOnly = true;
+			// 
+			// LOGIN
+			// 
+			this->LOGIN->HeaderText = L"LOGIN";
+			this->LOGIN->Name = L"LOGIN";
+			this->LOGIN->ReadOnly = true;
+			// 
+			// LOGOUT
+			// 
+			this->LOGOUT->HeaderText = L"LOGOUT";
+			this->LOGOUT->Name = L"LOGOUT";
+			this->LOGOUT->ReadOnly = true;
+			// 
+			// FirstName
+			// 
+			this->FirstName->HeaderText = L"FirstName";
+			this->FirstName->Name = L"FirstName";
+			this->FirstName->ReadOnly = true;
+			// 
+			// LastName
+			// 
+			this->LastName->HeaderText = L"LastName";
+			this->LastName->Name = L"LastName";
+			this->LastName->ReadOnly = true;
+			// 
+			// Department
+			// 
+			this->Department->HeaderText = L"Department";
+			this->Department->Name = L"Department";
+			this->Department->ReadOnly = true;
+			// 
+			// Course
+			// 
+			this->Course->HeaderText = L"Course";
+			this->Course->Name = L"Course";
+			this->Course->ReadOnly = true;
+			// 
+			// Year
+			// 
+			this->Year->HeaderText = L"Year";
+			this->Year->Name = L"Year";
+			this->Year->ReadOnly = true;
+			// 
+			// button1
+			// 
+			this->button1->Location = System::Drawing::Point(5, 323);
+			this->button1->Name = L"button1";
+			this->button1->Size = System::Drawing::Size(75, 23);
+			this->button1->TabIndex = 24;
+			this->button1->Text = L"Refresh List";
+			this->button1->UseVisualStyleBackColor = true;
+			this->button1->Click += gcnew System::EventHandler(this, &MainForm::button1_Click);
 			// 
 			// MainForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(826, 473);
+			this->ClientSize = System::Drawing::Size(826, 532);
 			this->ControlBox = false;
+			this->Controls->Add(this->button1);
+			this->Controls->Add(this->dataGridView1);
 			this->Controls->Add(this->tabControl1);
 			this->Controls->Add(this->groupBox4);
 			this->Controls->Add(this->groupBox2);
@@ -663,6 +838,7 @@ private: System::ComponentModel::IContainer^  components;
 			this->tabLogs->PerformLayout();
 			this->menuStrip1->ResumeLayout(false);
 			this->menuStrip1->PerformLayout();
+			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->dataGridView1))->EndInit();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -730,15 +906,34 @@ private: System::Void exitToolStripMenuItem_Click(System::Object^  sender, Syste
 		 }
 private: System::Void newEntryToolStripMenuItem_Click(System::Object^  sender, System::EventArgs^  e) {
 			//newEntry1 myForm;
+			/* const int kInputBufSize = 100;
+			char acServerAddress[kInputBufSize];
+			char acUserName[kInputBufSize];
+			char acPassword[kInputBufSize];
+			char tmpRFID[kInputBufSize];
+			ToUTF8(acServerAddress, kInputBufSize, serverAddress_->Text);
+			ToUTF8(acUserName, kInputBufSize, userName_->Text);
+			ToUTF8(acPassword, kInputBufSize, password_->Text);
+			ToUTF8(tmpRFID, kInputBufSize, RFID->Text);
+			*/
 
-			// MainForm::Hide();
-			FormNewEntry::newEntry^ form = gcnew FormNewEntry::newEntry();
+			 
+            if(this->_serialPort->IsOpen){
+                this->_serialPort->Close();
+				this->progressBar1->Value=0;
+            }
+
+			FormNewEntry::newEntry^ form = gcnew FormNewEntry::newEntry(serverAddress_->Text,userName_->Text,password_->Text,"test",RFID->Text,this->comboBox1->Text,this->comboBox2->Text);
+			//form->LoadDefaults(serverAddress_->Text,userName_->Text,password_->Text,"test",RFID->Text,this->comboBox1->Text,this->comboBox2->Text);
 			form->Show();
-			 Show();
+
 			//FormNewEntry::newEntry
 			/*if(myForm.ShowDialog() == System::Windows::Forms::DialogResult::OK){
 				//Do stuff
 			}*/
+		 }
+private: System::Void button1_Click(System::Object^  sender, System::EventArgs^  e) {			
+			GetCurrentSheet();
 		 }
 };
 }
