@@ -12,4 +12,6 @@ CREATE  TABLE `test`.`loginrecords` (
 
 ALTER TABLE `test`.`login` CHANGE COLUMN `banned` `banned` INT(1) UNSIGNED ZEROFILL NOT NULL DEFAULT 0  ;
 
-ALTER TABLE `test`.`login` DROP COLUMN `middlename` ;
+ALTER TABLE `test`.`login` DROP COLUMN `middlename` ;
+
+ALTER TABLE `test`.`login` CHANGE COLUMN `lastlogin` `lastlogin` DATETIME NULL  ;

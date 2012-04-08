@@ -449,21 +449,30 @@ namespace FormNewEntry {
 				status->Text = "ERROR:: One of the required fields is empty";
 			}
 			else {
-				mysqlpp::Query query = con.query("SELECT loginid FROM login WHERE cardnum = %0q");
-				query.parse();
-				mysqlpp::SimpleResult res = query.execute(str1);
-				if(res.rows()==0){
-					query << "INSERT INTO `login` (cardnum,firstname,lastname,email,department,course,yearlevel) VALUES (%0q,%1q,%2q,%3q,%4q,%5q,%6q)";
+				mysqlpp::Query tmpquery = con.query("SELECT loginid FROM login WHERE cardnum = %0q");
+				tmpquery.parse();
+				mysqlpp::StoreQueryResult tmpres = tmpquery.store(str1);
+
+				//mysqlpp::Query query = con.query("SELECT loginid FROM login WHERE cardnum = %0q");
+				//query.parse();
+				//mysqlpp::SimpleResult res = query.execute(str1);
+				size_t ii = 0;
+
+				if(tmpres.num_rows()> ii){
+					status->Text = "ERROR:: CARDNUM IS ALREADY USED!";
+					
+				}
+				else {
+					mysqlpp::Query query = con.query("INSERT INTO `login` (cardnum,firstname,lastname,email,department,course,yearlevel) VALUES (%0q,%1q,%2q,%3q,%4q,%5q,%6q)");
 					query.parse();
-					res = query.execute(str1,firstname,lastname,email,department,course,year);
+					mysqlpp::SimpleResult res = query.execute(str1,firstname,lastname,email,department,course,year);
 
 					if(res.rows()==0){
-						status->Text = "Save Failed!";
+						status->Text = gcnew String(con.error());	
 					} else {
 						status->Text = "Save Success!";
 					}
 				}
-				else status->Text = "ERROR:: CARDNUM IS ALREADY USED!";
 
 			}
 
